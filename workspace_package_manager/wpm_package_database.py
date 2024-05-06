@@ -47,7 +47,7 @@ class PackageDatabaseConstructor(object):
 				print(f"   {_colors.YELLOW}!ignoring {_colors.CYAN}{name}{_colors.YELLOW} due to {vault_key} missing ...{_colors.END}")
 				return
 			else:	
-				print(f"   {_colors.RED}+ {name} (fetching) {_colors.END}")
+				print(f"   {_colors.RED}+ fetching {name} -> {ipath} {_colors.END}")
 				e = self.add_git(name, github_path).branch("main")	
 				e.install(ipath)
 
