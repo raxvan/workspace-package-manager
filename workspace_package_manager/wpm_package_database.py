@@ -27,9 +27,18 @@ class PackageDatabaseConstructor(object):
 		abs_path = os.path.join(active_folder, rel_path_to_dir);
 		self.load_bucket(abs_path)
 
-	def add_github_bucket(self, vault_key, name, github_path):
+	def add_github_bucket(self, vault_key, name, github_path, install_path = None):
 		
-		abspath = os.path.join(self.active_bucket.folder, name)
+		ipath = None
+		if install_path != None:
+			if os.path.isabs(install_path):
+				ipath = install_path 
+			else:
+				ipath = os.path.join(os.path.join(self.active_bucket.folder, install_path))
+		else:
+			ipath = self.active_bucket.folder
+		
+		abspath = os.path.join(ipath, name)
 		
 		if not os.path.exists(abspath):
 			vault = self.database.vault
@@ -40,7 +49,7 @@ class PackageDatabaseConstructor(object):
 			else:	
 				print(f"   {_colors.RED}+ {name} (fetching) {_colors.END}")
 				e = self.add_git(name, github_path).branch("main")	
-				e.install(self.active_bucket.folder)
+				e.install(ipath)
 
 		self.add_bucket(abspath)
 
