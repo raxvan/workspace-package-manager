@@ -40,7 +40,7 @@ class PackageDatabaseConstructor(object):
 			else:	
 				print(f"   {_colors.RED}+ {name} (fetching) {_colors.END}")
 				e = self.add_git(name, github_path).branch("main")	
-				e.install(packdir)
+				e.install(self.active_bucket.folder)
 
 		self.add_bucket(abspath)
 
