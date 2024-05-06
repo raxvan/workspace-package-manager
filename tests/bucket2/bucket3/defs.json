@@ -1,0 +1,7 @@
+{
+	"pack-json2" : {
+		"class" : "git",
+		"active-branch" : "main",
+		"url": "https://github.com/raxvan/pySecretsVault"
+	}
+}

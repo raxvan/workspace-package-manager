@@ -1,0 +1,13 @@
+{
+	".bucket" : {
+		"GITHUB_TOKEN" : "",
+		"git-user" : "raxvan",
+		"git-email" : "razvan.om@gmail.com"
+	},
+	"pack-json1" : {
+		"class" : "git",
+		"active-branch" : "main",
+		"url": "https://github.com/raxvan/pySecretsVault"
+	}
+		
+}
