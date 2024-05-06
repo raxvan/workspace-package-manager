@@ -104,9 +104,17 @@ def get_git_status(git_model, install_path, fast):
 	return status
 
 
-def refresh_git(abs_path, fast, workspace):
+def refresh_git(entry, fast, workspace):
 	#first add as safe directory
-	wpm_internal_utils.run_silent_command("git config --global --add safe.directory " + abs_path, workspace)
+
+	#wpm_internal_utils.run_silent_command("git config --global --add safe.directory " + abs_path, workspace)
+	command = ""		
+	command += git_add_safe_command(workspace, entry)
+	command += git_user_command(workspace, entry)
+
+	rc = wpm_internal_utils.run_command_and_wait(command, workspace, True)
+	if rc != 0:
+		raise Exception(f"Failed to refresh {entry.name}")
 
 	if fast == True:
 		return
@@ -114,6 +122,7 @@ def refresh_git(abs_path, fast, workspace):
 	#second revert empty file changes
 	from git import Repo
 
+	abs_path = entry.get_install_path(workspace)
 	repo = Repo(abs_path)
 
 	if repo.bare:

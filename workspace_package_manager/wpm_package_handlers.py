@@ -248,7 +248,7 @@ class GitEntry(BasePackage):
 
 	def sanitize(self, workspace, fast):
 		u = _get_git_utils()
-		u.refresh_git(self.get_install_path(workspace), fast, workspace)
+		u.refresh_git(self, fast, workspace)
 
 		
 

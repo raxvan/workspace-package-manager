@@ -73,7 +73,7 @@ def _do_install(workspace, package_name_ref, force, shallow, optional):
 	packs = load_all_packages(workspace)
 	
 	c = wpm_package_controller.WorkspaceController(workspace, packs)
-	c.install_loop([package_name_ref], force, shallow, optional)
+	c.install_loop(package_name_ref, force, shallow, optional)
 
 def _do_refresh(workspace, fast):
 	packs = load_all_packages(workspace)
@@ -244,7 +244,7 @@ def _exec_action(workspace, args):
 
 	acc = args.action
 	if acc == "install":
-		_do_install(workspace, args.name, args.force, args.shallow, args.skip)
+		_do_install(workspace, args.names, args.force, args.shallow, args.skip)
 	elif acc == "refresh":
 		_do_refresh(workspace, args.fast)
 	elif acc == "clean":
@@ -290,7 +290,7 @@ def main():
 	install_parser.add_argument('-f', '--force', dest='force', action='store_true', help="Reinstall the package if already exists.")
 	install_parser.add_argument('-s', '--shallow', dest='shallow', action='store_true', help="Install without any other depndencies.")
 	install_parser.add_argument('-k', '--skip', dest='skip', action='store_true', help="Skip packages that are already installed")
-	install_parser.add_argument('name', default=None, help='The name of the package to install, see "list" command.')
+	install_parser.add_argument('names', nargs='*', help='The namse of the package to install, see "list" command.')
 
 	install_command_parser = subparsers.add_parser('install-command', description='prints a command in terminal which allows you to install the package from a terminal')
 	install_command_parser.set_defaults(action='install-command')

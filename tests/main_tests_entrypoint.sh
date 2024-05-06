@@ -29,6 +29,6 @@ wpm
 echo "LIST:"
 wpm list -a
 wpm install pack-pyr
-wpm install pack-pywr
-wpm install pack-json1
-wpm install pack-json2
+wpm install pack-pywr pack-json1 pack-json2
+
+wpm refresh
