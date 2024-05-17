@@ -27,29 +27,36 @@ def validate_search_locations(workspace):
 def get_package_search_locations(workspace):
 	return _search_locations.split(":")
 
-def _run_bucket_loading(workspace, loader):
+def _run_bucket_loading(workspace, loader, logger):
 	start = time.time()
 
 	bucket_list = get_package_search_locations(workspace)
-	print(f"{clrs.LIGHT_BLUE}-- workspace:{clrs.END} {clrs.PURPLE}{workspace}{clrs.END}")
-	print(f"{clrs.LIGHT_BLUE}-- loading packages:{clrs.END}")
+	
+	if logger != None:
+		logger(f"{clrs.LIGHT_BLUE}-- workspace:{clrs.END} {clrs.PURPLE}{workspace}{clrs.END}")
+		logger(f"{clrs.LIGHT_BLUE}-- loading packages:{clrs.END}")
 
 	#main definition in this repo
 	for b in bucket_list:
 		if os.path.exists(b):
 			loader.load_bucket(b)
+	
+	if logger != None:
+		duration = wpm_internal_utils.compute_duration(start)
+		logger(f"{clrs.LIGHT_GREEN}-- {clrs.BOLD}OK{clrs.END} {clrs.DARK_GRAY}({duration}){clrs.END}")
+		logger(clrs.DARK_GRAY + "-" * 64 + clrs.END)
 
-	duration = wpm_internal_utils.compute_duration(start)
-
-	print(f"{clrs.LIGHT_GREEN}-- {clrs.BOLD}OK{clrs.END} {clrs.DARK_GRAY}({duration}){clrs.END}")
-	print(clrs.DARK_GRAY + "-" * 64 + clrs.END)
-
-def load_all_packages(workspace):
+def load_all_packages(workspace, silent):
 	packs = wpm_package_database.PackageDatabase()
 
-	loader = wpm_package_database.PackageDatabaseConstructor(packs)
+	logger = print
+	if silent:
+		logger = None
 
-	_run_bucket_loading(workspace, loader)
+
+	loader = wpm_package_database.PackageDatabaseConstructor(packs, logger)
+
+	_run_bucket_loading(workspace, loader, logger)
 
 	return packs
 
@@ -58,7 +65,7 @@ def load_all_packages(workspace):
 #####################################################################################################
 
 def _do_remove(workspace, package_name_ref):
-	packs = load_all_packages(workspace)
+	packs = load_all_packages(workspace, silent)
 
 	package_info = packs.find(package_name_ref)
 	if (package_info == None):
@@ -72,14 +79,14 @@ def _do_remove(workspace, package_name_ref):
 	else:
 		print(f"{clrs.LIGHT_RED}-- warning:{clrs.END} could not find install path {ipath}")
 
-def _do_install(workspace, package_name_ref, force, shallow, optional):
-	packs = load_all_packages(workspace)
+def _do_install(workspace, silent, package_name_ref, force, shallow, optional):
+	packs = load_all_packages(workspace, silent)
 	
 	c = wpm_package_controller.WorkspaceController(workspace, packs)
 	c.install_loop(package_name_ref, force, shallow, optional)
 
-def _do_refresh(workspace, fast):
-	packs = load_all_packages(workspace)
+def _do_refresh(workspace, silent, fast):
+	packs = load_all_packages(workspace, silent)
 	items = os.listdir(workspace)
 	items = sorted(items)
 	for name in items:
@@ -105,7 +112,7 @@ def clean_files_recursive(directory):
 			print(f"removing: {path}")
 			os.remove(path)
 
-def _do_clean(workspace):
+def _do_clean(workspace, silent):
 	print("Cleaning files...")
 	clean_files_recursive(workspace)
 	print("Done.")
@@ -185,9 +192,9 @@ def show_all_package_status(packs, workspace, fast):
 
 	return update_commands
 
-def _do_status(workspace, name, fast):
+def _do_status(workspace, silent, name, fast):
 
-	packs = load_all_packages(workspace)
+	packs = load_all_packages(workspace, silent)
 
 	if name != None:
 		
@@ -205,9 +212,9 @@ def _do_status(workspace, name, fast):
 	#		if uc != None:
 	#			print(uc)
 
-def _do_list(workspace : str, showall : bool, showdef: bool):
+def _do_list(workspace : str, silent : bool, showall : bool, showdef : bool):
 
-	packs = load_all_packages(workspace)
+	packs = load_all_packages(workspace, silent)
 
 	names = sorted(packs.get_all_names())
 	if not names:
@@ -237,8 +244,8 @@ def _do_list(workspace : str, showall : bool, showdef: bool):
 			index += 1
 
 
-def _do_install_command(workspace, package):
-	packs = load_all_packages(workspace)
+def _do_install_command(workspace, silent, package):
+	packs = load_all_packages(workspace, silent)
 	package_info = packs.find(package)
 	if (package_info == None):
 		raise Exception("Could not find package: " + package)
@@ -251,19 +258,19 @@ def _exec_action(workspace, args):
 
 	acc = args.action
 	if acc == "install":
-		_do_install(workspace, args.names, args.force, args.shallow, args.skip)
+		_do_install(workspace, args.silent, args.names, args.force, args.shallow, args.skip)
 	elif acc == "refresh":
-		_do_refresh(workspace, args.fast)
+		_do_refresh(workspace, args.silent, args.fast)
 	elif acc == "clean":
-		_do_clean(workspace)
+		_do_clean(workspace, args.silent)
 	elif acc == "status":
-		_do_status(workspace, args.name, args.fast)
+		_do_status(workspace, args.silent, args.name, args.fast)
 	elif acc == "list":
-		_do_list(workspace, args.showall, args.showdef)
+		_do_list(workspace, args.silent, args.showall, args.showdef)
 	elif acc == "remove":
-		_do_remove(workspace, args.name)
+		_do_remove(workspace, args.silent, args.name)
 	elif acc == "install-command":
-		_do_install_command(workspace, args.name)
+		_do_install_command(workspace, args.silent, args.name)
 
 	os.chdir(originalDirectory)
 
@@ -290,6 +297,8 @@ def main():
 	user_arguments = sys.argv[1:]
 
 	parser = argparse.ArgumentParser()
+	parser.add_argument('-s', '--silent', dest='silent', action='store_true', help="Run in silent mode.")
+
 	subparsers = parser.add_subparsers(description='Actions:')
 
 	install_parser = subparsers.add_parser('install', description='Installs or reinstall a package.')

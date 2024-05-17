@@ -28,12 +28,12 @@ wpm list -d
 echo "---------------------------------------------- TEST 2:"
 export WPK_SEARCH_LOCATIONS=/repo/tests/bucket1:/repo/tests/bucket2
 export WPM_WORKSPACE_PATH=/repo/tests/_tests_workspace
-wpm list -a
+wpm -s list -a
 
 echo "---------------------------------------------- TEST 4(INSTALL):"
-wpm install pack-pyr
-wpm list -a -d
-wpm install pack-pywr pack-json1 pack-json2
-wpm list
+wpm -s install pack-pyr
+wpm -s list -a -d
+wpm -s install pack-pywr pack-json1 pack-json2
+wpm -s list
 echo "---------------------------------------------- TEST 5(REFRESH):"
 wpm refresh

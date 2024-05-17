@@ -16,11 +16,12 @@ from . import wpm_package_handlers
 _colors = wpm_internal_utils.Colors
 
 class PackageDatabaseConstructor(object):
-	def __init__(self, package_database):
+	def __init__(self, package_database, logger):
 		self.database = package_database
 
 		self.active_bucket = None
 		self.item_stack = []
+		self.logger = logger
 
 	def add_bucket(self, rel_path_to_dir):
 		active_folder = self.active_bucket.folder
@@ -44,10 +45,12 @@ class PackageDatabaseConstructor(object):
 			vault = self.database.vault
 			scr = vault[vault_key]
 			if scr == None:
-				print(f"   {_colors.YELLOW}!ignoring {_colors.CYAN}{name}{_colors.YELLOW} due to {vault_key} missing ...{_colors.END}")
+				if self.logger != None:
+					self.logger(f"   {_colors.YELLOW}!ignoring {_colors.CYAN}{name}{_colors.YELLOW} due to {vault_key} missing ...{_colors.END}")
 				return
-			else:	
-				print(f"   {_colors.RED}+ fetching {name} -> {ipath} {_colors.END}")
+			else:
+				if self.logger != None:
+					self.logger(f"   {_colors.RED}+ fetching {name} -> {ipath} {_colors.END}")
 				e = self.add_git(name, github_path).branch("main")	
 				e.install(ipath)
 
@@ -81,7 +84,8 @@ class PackageDatabaseConstructor(object):
 
 	def _add_entry(self, entry, contents):
 		if entry.deserialize(contents) == False:
-			print(f"{_colors.LIGHT_RED}WARNING: Failed to deserialize entry {entry.name} ...{_colors.END}")
+			if self.logger != None:
+				self.logger(f"{_colors.LIGHT_RED}WARNING: Failed to deserialize entry {entry.name} ...{_colors.END}")
 			return None
 
 		self.database.add_package(entry.name, entry)
@@ -95,7 +99,8 @@ class PackageDatabaseConstructor(object):
 		elif classname == "zip":
 			return wpm_package_handlers.ZipEntry(package_name, self.database, self.active_bucket)
 		else:
-			print(f"{_colors.LIGHT_RED}WARNING: Failed to create entry with class '{classname}' ...{_colors.END}")
+			if self.logger != None:
+				self.logger(f"{_colors.LIGHT_RED}WARNING: Failed to create entry with class '{classname}' ...{_colors.END}")
 
 		return None
 
@@ -139,7 +144,8 @@ class PackageDatabaseConstructor(object):
 			return False
 
 		active_folder = self.active_bucket.folder
-		print(f"     {_colors.CYAN}{os.path.relpath(abs_path_to_file, active_folder)}{_colors.END}")
+		if self.logger != None:
+			self.logger(f"     {_colors.CYAN}{os.path.relpath(abs_path_to_file, active_folder)}{_colors.END}")
 
 		json_content = None	
 		try:
@@ -161,7 +167,8 @@ class PackageDatabaseConstructor(object):
 			return False
 
 		active_folder = self.active_bucket.folder
-		print(f"     {_colors.CYAN}{os.path.relpath(abs_path_to_file, active_folder)}{_colors.END}")
+		if self.logger != None:
+			self.logger(f"     {_colors.CYAN}{os.path.relpath(abs_path_to_file, active_folder)}{_colors.END}")
 
 		active_file = self.active_bucket.file
 		file_secret = self.database.vault[active_file]
@@ -184,7 +191,8 @@ class PackageDatabaseConstructor(object):
 			return False
 
 		active_folder = self.active_bucket.folder
-		print(f"     {_colors.CYAN}{os.path.relpath(abs_path_to_file, active_folder)}{_colors.END}")
+		if self.logger != None:
+			self.logger(f"     {_colors.CYAN}{os.path.relpath(abs_path_to_file, active_folder)}{_colors.END}")
 
 		import importlib.util
 		load_location = "definition.sha" + hashlib.sha256(abs_path_to_file.encode('utf-8')).hexdigest()
@@ -225,8 +233,8 @@ class PackageDatabaseConstructor(object):
 			#silent skip
 			return
 		
-		if(loaded == False):
-			print(f"{_colors.YELLOW}   ! {abs_item_path} skipped ...{_colors.END}")
+		if loaded == False and self.logger != None:
+			self.logger(f"{_colors.YELLOW}   ! {abs_item_path} skipped ...{_colors.END}")
 
 
 	def load_bucket(self, abs_path_to_dir):
@@ -235,7 +243,8 @@ class PackageDatabaseConstructor(object):
 
 		folders_and_files = os.listdir(abs_path_to_dir)
 
-		print(f"   {_colors.BROWN}#{abs_path_to_dir}{_colors.END}")
+		if self.logger != None:
+			self.logger(f"   {_colors.BROWN}#{abs_path_to_dir}{_colors.END}")
 
 		for i in folders_and_files:
 			abs_item_path = os.path.join(abs_path_to_dir, i)
