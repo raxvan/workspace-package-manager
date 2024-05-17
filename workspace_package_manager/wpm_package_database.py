@@ -90,10 +90,12 @@ class PackageDatabaseConstructor(object):
 	def create_entry(self, classname, package_name):
 		if classname == "git":
 			return wpm_package_handlers.GitEntry(package_name, self.database, self.active_bucket)
+		elif classname == "local":
+			return wpm_package_handlers.LocalEntry(package_name, self.database, self.active_bucket)
 		elif classname == "zip":
 			return wpm_package_handlers.ZipEntry(package_name, self.database, self.active_bucket)
 		else:
-			print(f"{_colors.LIGHT_RED}WARNING: Failed to create entry with class {classname} ...{_colors.END}")
+			print(f"{_colors.LIGHT_RED}WARNING: Failed to create entry with class '{classname}' ...{_colors.END}")
 
 		return None
 
@@ -162,11 +164,11 @@ class PackageDatabaseConstructor(object):
 		print(f"     {_colors.CYAN}{os.path.relpath(abs_path_to_file, active_folder)}{_colors.END}")
 
 		active_file = self.active_bucket.file
-		file_secret = _get_secrets().get(active_file, None)
+		file_secret = self.database.vault[active_file]
 		if file_secret == None:
 			return False
 
-		json_content = wpm_secrets.decode_text_file(active_file, file_secret, abs_path_to_file)	
+		json_content = secretsvault.vault_decode_file(file_secret, abs_path_to_file, None)
 		try:
 			json_content = json.loads(json_content)
 		except:
@@ -277,8 +279,15 @@ class PackageDatabase(object):
 	#######################################################################################################
 	#######################################################################################################
 
-	def add_package(self, package_name, package_handler):
-		self.db[package_name] = package_handler
+	def add_package(self, package_name, newp):
+		pp = self.db.get(package_name, None)
+		if pp != None:
+			m = "Duplicate package!\n"
+			m += f"\t -> {pp.get_definition_location()}\n"
+			m += f"\t -> {newp.get_definition_location()}\n"
+			raise Exception(m)
+
+		self.db[package_name] = newp
 
 	def add_definition(self, abs_def_path):
 		if abs_def_path in self.modules:

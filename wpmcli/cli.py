@@ -27,10 +27,13 @@ def validate_search_locations(workspace):
 def get_package_search_locations(workspace):
 	return _search_locations.split(":")
 
-def _run_bucket_loading(bucket_list, loader):
-	print(f"{clrs.LIGHT_BLUE}-- loading packages...{clrs.END}")
-
+def _run_bucket_loading(workspace, loader):
 	start = time.time()
+
+	bucket_list = get_package_search_locations(workspace)
+	print(f"{clrs.LIGHT_BLUE}-- workspace:{clrs.END} {clrs.PURPLE}{workspace}{clrs.END}")
+	print(f"{clrs.LIGHT_BLUE}-- loading packages:{clrs.END}")
+
 	#main definition in this repo
 	for b in bucket_list:
 		if os.path.exists(b):
@@ -46,7 +49,7 @@ def load_all_packages(workspace):
 
 	loader = wpm_package_database.PackageDatabaseConstructor(packs)
 
-	_run_bucket_loading(get_package_search_locations(workspace), loader)
+	_run_bucket_loading(workspace, loader)
 
 	return packs
 
@@ -136,15 +139,12 @@ def print_installed_package_status(workspace, package, fast):
 def print_ok_status(abs_path, pname):
 	print("    " + (pname + " ").ljust(16,"-") + "> Ok...")
 
-def show_single_package_status(packs, workspace, name, fast, show_update_commands):
-	update_commands = []
+def show_single_package_status(packs, workspace, name, fast):
 	entry = packs.find(name)
 	if entry != None:
 		abspath = entry.get_install_path(workspace)
 		if os.path.exists(abspath):
-			up = print_installed_package_status(workspace, entry, fast);
-			if show_update_commands and up:
-				update_commands.append(entry.get_update_command())
+			print_installed_package_status(workspace, entry, fast);
 		else:
 			print_package_missing_status(entry.name)
 	else:
@@ -153,8 +153,7 @@ def show_single_package_status(packs, workspace, name, fast, show_update_command
 
 	return update_commands
 
-def show_all_package_status(packs, workspace, fast, show_update_commands):
-	update_commands = []
+def show_all_package_status(packs, workspace, fast):
 	locations = {}
 	for n, e in packs.getall():
 		locations[e.get_install_path(workspace)] = e
@@ -175,9 +174,7 @@ def show_all_package_status(packs, workspace, fast, show_update_commands):
 			else:
 				unlisted.append((abspath, v))
 		elif os.path.exists(abspath):
-				up = print_installed_package_status(workspace, v, fast);
-				if show_update_commands and up:
-					update_commands.append(v.get_update_command())
+				print_installed_package_status(workspace, v, fast);
 
 	print ("UNLISTED:")
 	for apath, name in unlisted:
@@ -188,29 +185,27 @@ def show_all_package_status(packs, workspace, fast, show_update_commands):
 
 	return update_commands
 
-def _do_status(workspace, name, fast, show_update_commands):
+def _do_status(workspace, name, fast):
 
 	packs = load_all_packages(workspace)
 
-	update_commands = []
-
 	if name != None:
 		
-		update_commands = update_commands + show_single_package_status(packs, workspace, name, fast, show_update_commands)
+		show_single_package_status(packs, workspace, name, fast)
 		
 	else:
 		hworkspace = os.environ['HOST_WORKSPACE']
 		print(f"WORKSPACE: {hworkspace}")
 
-		update_commands = update_commands + show_all_package_status(packs, workspace, fast, show_update_commands)
+		show_all_package_status(packs, workspace, fast)
 
-	if show_update_commands == True:
-		print ("Ready to update: " + workspace)
-		for uc in update_commands:
-			if uc != None:
-				print(uc)
+	#if show_update_commands == True:
+	#	print ("Ready to update: " + workspace)
+	#	for uc in update_commands:
+	#		if uc != None:
+	#			print(uc)
 
-def _do_list(workspace : str, showall : bool):
+def _do_list(workspace : str, showall : bool, showdef: bool):
 
 	packs = load_all_packages(workspace)
 
@@ -220,15 +215,27 @@ def _do_list(workspace : str, showall : bool):
 		return
 	maxname = max([len(n) for n in names]) + 4
 
-	index = 0
+	index = 1
 	for n in names:
-		wp = os.path.join(workspace, n)
-		if os.path.exists(wp):
-			print(str(index).rjust(3) + "| " + n.ljust(maxname," ") + "@" + wp)
+		
+		p = packs.get(n)
+
+		extra_info = ""
+		if showdef == True:
+			extra_info += f" def:{p.get_definition_location()}"
+		
+		install_location = p.get_install_path(workspace)
+		exists = os.path.exists(install_location)
+
+		if exists == True:
+			extra_info += f" installed:{install_location}"
+			print(str(index).rjust(3) + " | " + n.ljust(maxname," ") + extra_info)
 			index += 1
 		elif showall == True:
-			print(str(index).rjust(3) + "| " + n)
+			extra_info += f" missing:{install_location}"
+			print(str(index).rjust(3) + " | " + n.ljust(maxname," ") + extra_info)
 			index += 1
+
 
 def _do_install_command(workspace, package):
 	packs = load_all_packages(workspace)
@@ -250,9 +257,9 @@ def _exec_action(workspace, args):
 	elif acc == "clean":
 		_do_clean(workspace)
 	elif acc == "status":
-		_do_status(workspace, args.name, args.fast, args.update)
+		_do_status(workspace, args.name, args.fast)
 	elif acc == "list":
-		_do_list(workspace, args.showall)
+		_do_list(workspace, args.showall, args.showdef)
 	elif acc == "remove":
 		_do_remove(workspace, args.name)
 	elif acc == "install-command":
@@ -306,11 +313,11 @@ def main():
 	list_parser = subparsers.add_parser('list', description='Lists package information.')
 	list_parser.set_defaults(action='list')
 	list_parser.add_argument('-a', '--all', dest='showall', action='store_true', help="Show all packages from database")
+	list_parser.add_argument('-d', '--def', dest='showdef', action='store_true', help="Show package definition")
 
 	status_parser = subparsers.add_parser('status', description='Shows status of packages in workspace and workspace')
 	status_parser.set_defaults(action='status')
 	status_parser.add_argument('-f', '--fast', dest='fast', action='store_true', help="Only show if repository is dirty.")
-	status_parser.add_argument('-u', '--update', dest='update', action='store_true', help="Print a quick update command")
 	status_parser.add_argument('name', nargs='?', default=None, help='The name of the package to install, see "list" command.')
 
 	rm_parser = subparsers.add_parser('rm', description='remove a package')

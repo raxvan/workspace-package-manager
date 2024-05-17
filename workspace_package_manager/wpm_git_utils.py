@@ -244,7 +244,7 @@ def install_git_entry(workspace, entry):
 
 	except Exception as ex:
 		print(f"Error:{e}")
-		return false
+		return False
 
 
 	

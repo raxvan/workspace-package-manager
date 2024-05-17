@@ -144,9 +144,7 @@ class BasePackage(object):
 		return self.actions
 
 	def format_string(self, s):
-		
 		props = self.bucket.get_flat_properties(self.database)		
-		
 		try:
 			return s.format(**props)
 		except KeyError as e:
@@ -250,7 +248,35 @@ class GitEntry(BasePackage):
 		u = _get_git_utils()
 		u.refresh_git(self, fast, workspace)
 
+#######################################################################################################
+
+class LocalEntry(BasePackage):
+	def __init__(self, name, pakdb, definition):
+		BasePackage.__init__(self, name, pakdb, definition)
 		
+	#######################################################################################################
+
+	def init_from_dict(self, params):
+		return True
+
+	def init_from_string(self, params):
+		return True
+
+	def install(self, workspace):
+		return True
+			
+	def generate_install_command(self):
+		return "<null>"
+
+	def get_status(self, workspace, fast):
+		return wpm_internal_utils.PackageStatusMessage()
+
+	def get_update_command(self):
+		return self.name
+
+	def sanitize(self, workspace, fast):
+		u = _get_git_utils()
+		u.refresh_git(self, fast, workspace)
 
 #######################################################################################################
 

@@ -1,5 +1,6 @@
-test_workspace
-
+_tests_workspace
+workspace_package_manager.egg-info
+build
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
