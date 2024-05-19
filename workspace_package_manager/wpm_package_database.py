@@ -291,7 +291,7 @@ class PackageDatabase(object):
 	def add_package(self, package_name, newp):
 		pp = self.db.get(package_name, None)
 		if pp != None:
-			m = "Duplicate package!\n"
+			m = f"Duplicate package found: {package_name}\n"
 			m += f"\t -> {pp.get_definition_location()}\n"
 			m += f"\t -> {newp.get_definition_location()}\n"
 			raise Exception(m)
