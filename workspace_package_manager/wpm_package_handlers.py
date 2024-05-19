@@ -90,7 +90,7 @@ class BasePackage(object):
 		
 	def get_definition_location(self):
 		#return self.bucket.file
-		return self.bucket.absfile
+		return self.bucket.abspath
 
 	def deserialize(self, params):
 		if isinstance(params, str):
