@@ -258,19 +258,21 @@ def _exec_action(workspace, args):
 
 	acc = args.action
 	if acc == "install":
-		_do_install(workspace, args.silent, args.names, args.force, args.shallow, args.skip)
+		_do_install(workspace, args.quiet, args.names, args.force, args.shallow, args.skip)
 	elif acc == "refresh":
-		_do_refresh(workspace, args.silent, args.fast)
+		_do_refresh(workspace, args.quiet, args.fast)
 	elif acc == "clean":
-		_do_clean(workspace, args.silent)
+		_do_clean(workspace, args.quiet)
+	if acc == "do":
+		_do_action(workspace, args.quiet, args.names, args.force, args.shallow, args.skip)
 	elif acc == "status":
-		_do_status(workspace, args.silent, args.name, args.fast)
+		_do_status(workspace, args.quiet, args.name, args.fast)
 	elif acc == "list":
-		_do_list(workspace, args.silent, args.showall, args.showdef)
+		_do_list(workspace, args.quiet, args.showall, args.showdef)
 	elif acc == "remove":
-		_do_remove(workspace, args.silent, args.name)
+		_do_remove(workspace, args.quiet, args.name)
 	elif acc == "install-command":
-		_do_install_command(workspace, args.silent, args.name)
+		_do_install_command(workspace, args.quiet, args.name)
 
 	os.chdir(originalDirectory)
 
@@ -297,7 +299,7 @@ def main():
 	user_arguments = sys.argv[1:]
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument('-s', '--silent', dest='silent', action='store_true', help="Run in silent mode.")
+	parser.add_argument('-q', '--quiet', dest='quiet', action='store_true', help="Run in quiet mode.")
 
 	subparsers = parser.add_subparsers(description='Actions:')
 
@@ -315,6 +317,10 @@ def main():
 	refresh_parser = subparsers.add_parser('refresh', description='Handles the removal of retarded garbage, run it at least one when you start working.')
 	refresh_parser.set_defaults(action='refresh')
 	refresh_parser.add_argument('-f', '--fast', dest='fast', action='store_true', help="Skip some steps in the refresh process to avoid waiting on large repositories")
+
+	do_parser = subparsers.add_parser('do', description='Executes an action in the package (if found)')
+	do_parser.set_defaults(action='do')
+	do_parser.add_argument('name', default=None, help='The function name to be calle  ')
 
 	clean_parser = subparsers.add_parser('clean', description='Removes useless files from the workspace')
 	clean_parser.set_defaults(action='clean')
