@@ -246,10 +246,6 @@ def install_git_entry(workspace, entry):
 		print(f"Error:{e}")
 		return False
 
-
-	
-
-
 def create_install_command(url, model, name):
 	if model.locked != None:
 		command = ""

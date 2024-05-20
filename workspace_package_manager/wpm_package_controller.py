@@ -15,22 +15,6 @@ class PackageMetadata():
 
 #####################################################################################################
 
-class PackageActions():
-	def __init__(self, abs_file_path, pack):
-		self.path = abs_file_path
-		self.actions = None
-		self.pack = pack
-
-	def init(self):
-		f = open(self.path, "r")
-		self.contents = json.load(f)
-		f.close()
-
-	#def evaluate_dependencies(self):
-	#	return self.contents.get("+", [])
-
-#####################################################################################################
-
 class WorkspaceController():
 	def __init__(self, workspace, packs):
 		self.workspace = workspace
@@ -78,7 +62,7 @@ class WorkspaceController():
 		if package_info.install(self.workspace) == False:
 			duration = wpm_internal_utils.compute_duration(start_time)
 			print(f"{_colors.LIGHT_RED}-- {_colors.BOLD}ERROR{_colors.END} {_colors.DARK_GRAY}({duration}){_colors.END}")
-			return
+			return None
 
 		return self._process_install(package_info, start_time)
 

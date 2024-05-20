@@ -32,12 +32,6 @@ class BucketDefinition():
 
 		self.props[pname] = str(pvalue)
 
-	#def get_all(self):
-	#	if self.props != None:
-	#		return self.props
-    #
-	#	return {}
-
 	def get_recursive_properties(self):
 		props = {}
 		if self.parent != None:
@@ -77,6 +71,15 @@ class PackageActions:
 		module = importlib.util.module_from_spec(spec)
 		spec.loader.exec_module(module)
 		return module
+
+	def run(self, name):
+		func = getattr(self.module, name, None)
+		if func != None:
+			return func(), True
+
+		return None, False
+
+#######################################################################################################
 
 class BasePackage(object):
 	def __init__(self, name, pdatabase, bucket):

@@ -345,7 +345,9 @@ def main():
 		_exec_action(workspace, args)
 	else:
 		print("Usage:")
-		print("\t-> wpm ACTION [args]")
+		print("\t-> wpm [-q] ACTION [args]")
+		print("ARGS:")
+		print("\t-q : `quiet` mode, print less stuff.")
 		print("ACTION Choices:")
 		for k, _ in subparsers.choices.items():
 			print(f"\t-> {k}")
