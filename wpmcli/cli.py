@@ -158,8 +158,6 @@ def show_single_package_status(packs, workspace, name, fast):
 		print(f"No such package `{name}`")
 		return
 
-	return update_commands
-
 def show_all_package_status(packs, workspace, fast):
 	locations = {}
 	for n, e in packs.getall():
@@ -190,7 +188,6 @@ def show_all_package_status(packs, workspace, fast):
 	for apath, name in ignored:
 		print_ignored_status(apath, name)
 
-	return update_commands
 
 def _do_status(workspace, silent, name, fast):
 
