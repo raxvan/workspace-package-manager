@@ -20,13 +20,13 @@ cd /repo/tests/workspace
 vault set encoded_definition.jv testpass
 
 cd /repo/tests
-export WPK_SEARCH_LOCATIONS=/repo/tests/workspace
+export WPM_SEARCH_LOCATIONS=/repo/tests/workspace
 wpm
 cd /repo/tests/workspace
 wpm list -d
 
 echo "---------------------------------------------- TEST 2:"
-export WPK_SEARCH_LOCATIONS=/repo/tests/bucket1:/repo/tests/bucket2
+export WPM_SEARCH_LOCATIONS=/repo/tests/bucket1:/repo/tests/bucket2
 export WPM_WORKSPACE_PATH=/repo/tests/_tests_workspace
 wpm -q list -a
 

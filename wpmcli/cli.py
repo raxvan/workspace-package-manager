@@ -15,7 +15,7 @@ from workspace_package_manager import wpm_package_controller
 #####################################################################################################
 
 clrs = wpm_internal_utils.Colors
-_search_locations = os.environ.get("WPK_SEARCH_LOCATIONS", None)
+_search_locations = os.environ.get("WPM_SEARCH_LOCATIONS", None)
 _worskace_path = os.environ.get("WPM_WORKSPACE_PATH", None)
 
 def validate_search_locations(workspace):
@@ -350,7 +350,7 @@ def main():
 			print(f"\t-> {k}")
 		print("Workspace path (WPM_WORKSPACE_PATH):")
 		print(f"\t-> {workspace}")
-		print("Search search locations (WPK_SEARCH_LOCATIONS):")
+		print("Search search locations (WPM_SEARCH_LOCATIONS):")
 		for p in get_package_search_locations(workspace):
 			print(f"\t-> {p}")
 	
