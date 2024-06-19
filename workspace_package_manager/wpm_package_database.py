@@ -1,11 +1,12 @@
 
 import os
+import io
 import sys
 import json
 import hashlib
 import requests
 import zipfile
-import io
+import time
 import shutil
 
 import secretsvault
@@ -56,8 +57,25 @@ class PackageDatabaseConstructor(object):
 
 		self.add_bucket(abspath)
 
+	def load_bucket_list(self, workspace, bucket_list):
+		start = time.time()
+		
+		if self.logger != None:
+			self.logger(f"{_colors.LIGHT_BLUE}-- workspace:{_colors.END} {_colors.PURPLE}{workspace}{_colors.END}")
+			self.logger(f"{_colors.LIGHT_BLUE}-- loading packages:{_colors.END}")
+
+		#main definition in this repo
+		for b in bucket_list:
+			if os.path.exists(b):
+				self.load_bucket(b)
+		
+		if self.logger != None:
+			duration = wpm_internal_utils.compute_duration(start)
+			self.logger(f"{_colors.LIGHT_GREEN}-- {_colors.BOLD}OK{_colors.END} {_colors.DARK_GRAY}({duration}){_colors.END}")
+			self.logger(_colors.DARK_GRAY + "-" * 64 + _colors.END)
+
 	def add_git(self, package_name, params):
-		entry = wpm_package_handlers.GitEntry(package_name, self.database, self.active_bucket)
+		entry = wpm_package_handlers.GitEntry(package_name, self.active_bucket)
 
 		if entry.deserialize(params) == False:
 			return None
@@ -67,7 +85,7 @@ class PackageDatabaseConstructor(object):
 		return entry
 
 	def add_zip(self, package_name, params):
-		entry = wpm_package_handlers.ZipEntry(package_name, self.database, self.active_bucket)
+		entry = wpm_package_handlers.ZipEntry(package_name, self.active_bucket)
 
 		return self._add_entry(entry, params)
 
@@ -93,11 +111,11 @@ class PackageDatabaseConstructor(object):
 
 	def create_entry(self, classname, package_name):
 		if classname == "git":
-			return wpm_package_handlers.GitEntry(package_name, self.database, self.active_bucket)
+			return wpm_package_handlers.GitEntry(package_name, self.active_bucket)
 		elif classname == "local":
-			return wpm_package_handlers.LocalEntry(package_name, self.database, self.active_bucket)
+			return wpm_package_handlers.LocalEntry(package_name, self.active_bucket)
 		elif classname == "zip":
-			return wpm_package_handlers.ZipEntry(package_name, self.database, self.active_bucket)
+			return wpm_package_handlers.ZipEntry(package_name, self.active_bucket)
 		else:
 			if self.logger != None:
 				self.logger(f"{_colors.LIGHT_RED}WARNING: Failed to create entry with class '{classname}' ...{_colors.END}")
@@ -115,7 +133,7 @@ class PackageDatabaseConstructor(object):
 		if self.database.add_definition(abs_item_path) == False:
 			return False
 
-		self.active_bucket = wpm_package_handlers.BucketDefinition(self.active_bucket, abs_item_path)
+		self.active_bucket = wpm_package_handlers.BucketDefinition(self.active_bucket, self.database, abs_item_path)
 		self.item_stack.append(self.active_bucket)
 
 		return True

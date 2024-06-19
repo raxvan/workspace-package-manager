@@ -12,12 +12,14 @@ from . import wpm_package_models
 from . import wpm_internal_utils
 
 class BucketDefinition():
-	def __init__(self, parent, abs_path):
+	def __init__(self, parent, database, abs_path):
 		self.parent = parent
+		self.database = database
 		self.folder, self.file = os.path.split(abs_path)
 		self.abspath = abs_path
+		
 		self.props = None
-		self.rprops = None
+		
 		
 	def get_property(self, name):
 		if self.props != None:
@@ -53,9 +55,9 @@ class BucketDefinition():
 	def load_json_properties(self, jdict):
 		self.props = jdict
 
-	def get_flat_properties(self, database):
+	def get_flat_properties(self):
 		rp = self.get_recursive_properties()
-		rp.update(database.fetch_properties([k for k in rp.keys()]))
+		rp.update(self.database.fetch_properties([k for k in rp.keys()]))
 		return rp
 
 
@@ -82,9 +84,8 @@ class PackageActions:
 #######################################################################################################
 
 class BasePackage(object):
-	def __init__(self, name, pdatabase, bucket):
+	def __init__(self, name, bucket):
 		self.name = name
-		self.database = pdatabase
 		self.bucket = bucket
 		self.actions = None
 
@@ -94,14 +95,6 @@ class BasePackage(object):
 	def get_definition_location(self):
 		#return self.bucket.file
 		return self.bucket.abspath
-
-	def deserialize(self, params):
-		if isinstance(params, str):
-			return self.init_from_string(params)
-		elif isinstance(params, dict):
-			return self.init_from_dict(params)
-
-		return False
 
 	def get_install_path(self, workspace):
 		#returns complete path (including the name)
@@ -113,6 +106,14 @@ class BasePackage(object):
 
 	#######################################################################################################
 
+	def deserialize(self, params):
+		if isinstance(params, str):
+			return self.init_from_string(params)
+		elif isinstance(params, dict):
+			return self.init_from_dict(params)
+
+		return False
+
 	def init_from_string(self, params):
 		return False
 
@@ -122,19 +123,24 @@ class BasePackage(object):
 	def sanitize(self, workspace, fast):
 		pass
 
-	def get_status(self, fast):
-		return None	
+	#######################################################################################################
 
-	def get_update_command(self):
-		return None
+	def get_status(self, fast):
+		#TODO: cleanup
+		#return wpm_internal_utils.PackageStatusMessage
+		return None	
 
 	def install(self, workspace):
 		#returns True/False if install was successfull
 		return False
 
-	def generate_install_command(self, workspace):
-		#returns a command which can be pasted into the terminal to install the package somewhere
-		pass
+	def get_installed_revision(self, workspace):
+		#returns sha 256 revision
+		return None
+
+	def get_remote_revision(self, branch):
+		#returns sha 256 revision
+		return None
 
 	def get_actions(self, workspace):
 		if self.actions != None:
@@ -148,7 +154,7 @@ class BasePackage(object):
 		return self.actions
 
 	def format_string(self, s):
-		props = self.bucket.get_flat_properties(self.database)		
+		props = self.bucket.get_flat_properties()		
 		try:
 			return s.format(**props)
 		except KeyError as e:
@@ -156,13 +162,16 @@ class BasePackage(object):
 
 
 #######################################################################################################
+#######################################################################################################
+#######################################################################################################
+
 def _get_git_utils():
 	from . import wpm_git_utils
 	return wpm_git_utils
 
 class GitEntry(BasePackage):
-	def __init__(self, name, pakdb, definition):
-		BasePackage.__init__(self, name, pakdb, definition)
+	def __init__(self, name, bucket):
+		BasePackage.__init__(self, name, bucket)
 		
 		self.model = wpm_package_models.GitModel()
 
@@ -216,18 +225,18 @@ class GitEntry(BasePackage):
 		return self.format_string(self.model.url)
 
 	def install(self, workspace):
-		
 		u = _get_git_utils()
 		return u.install_git_entry(workspace, self);
-			
-	def generate_install_command(self):
+
+	def get_installed_revision(self, workspace):
 		u = _get_git_utils()
-		url = self.get_clone_url()
-		return u.create_install_command(
-			url,
-			self.model,
-			self.name
-		)
+		return u.get_installed_revision(workspace, self)
+
+	def get_remote_revision(self, branch = None):
+		u = _get_git_utils()
+		if branch == None:
+			branch = self.get_active_branch()
+		return u.get_remote_revision(branch, self)
 
 	def get_status(self, workspace, fast):
 		ipath = self.get_install_path(workspace)
@@ -243,10 +252,6 @@ class GitEntry(BasePackage):
 			if self.model.locked != None:
 				status.info = "locked:" + self.model.locked
 			return status
-			
-
-	def get_update_command(self):
-		return self.name
 
 	def sanitize(self, workspace, fast):
 		u = _get_git_utils()
@@ -255,8 +260,8 @@ class GitEntry(BasePackage):
 #######################################################################################################
 
 class LocalEntry(BasePackage):
-	def __init__(self, name, pakdb, definition):
-		BasePackage.__init__(self, name, pakdb, definition)
+	def __init__(self, name, bucket):
+		BasePackage.__init__(self, name, bucket)
 		
 	#######################################################################################################
 
@@ -269,14 +274,8 @@ class LocalEntry(BasePackage):
 	def install(self, workspace):
 		return True
 			
-	def generate_install_command(self):
-		return "<null>"
-
 	def get_status(self, workspace, fast):
 		return wpm_internal_utils.PackageStatusMessage()
-
-	def get_update_command(self):
-		return self.name
 
 	def sanitize(self, workspace, fast):
 		u = _get_git_utils()
@@ -285,8 +284,8 @@ class LocalEntry(BasePackage):
 #######################################################################################################
 
 class ZipEntry(BasePackage):
-	def __init__(self, name, pakdb, definition):
-		BasePackage.__init__(self, name, pakdb, definition)
+	def __init__(self, name, bucket):
+		BasePackage.__init__(self, name, bucket)
 		self.url = None
 
 	def init_from_dict(self, params):

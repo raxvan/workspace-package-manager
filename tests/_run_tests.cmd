@@ -3,8 +3,10 @@
 set REPODIR=%~dp0../
 set TEST_ENV_NAME=wpm-tests
 
-docker build -t %TEST_ENV_NAME% -f %~dp0test-env.dockerfile %~dp0
+robocopy %REPODIR%/../pySecretsVault %REPODIR%/build/pySecretsVault /E
 
+docker build -t %TEST_ENV_NAME% -f %~dp0test-env.dockerfile %~dp0../
+ 
 docker run ^
 	-it ^
 	--rm ^

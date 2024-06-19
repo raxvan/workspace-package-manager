@@ -27,25 +27,6 @@ def validate_search_locations(workspace):
 def get_package_search_locations(workspace):
 	return _search_locations.split(":")
 
-def _run_bucket_loading(workspace, loader, logger):
-	start = time.time()
-
-	bucket_list = get_package_search_locations(workspace)
-	
-	if logger != None:
-		logger(f"{clrs.LIGHT_BLUE}-- workspace:{clrs.END} {clrs.PURPLE}{workspace}{clrs.END}")
-		logger(f"{clrs.LIGHT_BLUE}-- loading packages:{clrs.END}")
-
-	#main definition in this repo
-	for b in bucket_list:
-		if os.path.exists(b):
-			loader.load_bucket(b)
-	
-	if logger != None:
-		duration = wpm_internal_utils.compute_duration(start)
-		logger(f"{clrs.LIGHT_GREEN}-- {clrs.BOLD}OK{clrs.END} {clrs.DARK_GRAY}({duration}){clrs.END}")
-		logger(clrs.DARK_GRAY + "-" * 64 + clrs.END)
-
 def load_all_packages(workspace, silent):
 	packs = wpm_package_database.PackageDatabase()
 
@@ -53,10 +34,10 @@ def load_all_packages(workspace, silent):
 	if silent:
 		logger = None
 
-
 	loader = wpm_package_database.PackageDatabaseConstructor(packs, logger)
-
-	_run_bucket_loading(workspace, loader, logger)
+	
+	bucket_list = get_package_search_locations(workspace)
+	loader.load_bucket_list(workspace, bucket_list)
 
 	return packs
 
@@ -78,6 +59,22 @@ def _do_remove(workspace, package_name_ref):
 		print(" (done)")
 	else:
 		print(f"{clrs.LIGHT_RED}-- warning:{clrs.END} could not find install path {ipath}")
+
+def _do_revision(workspace, silent, remoterev, package_name_ref):
+	packs = load_all_packages(workspace, silent)
+
+	package_info = packs.find(package_name_ref)
+	if (package_info == None):
+		raise Exception(f"Could not find package [{package_name_ref}] ...")
+
+	rev = None
+	if remoterev:
+		rev = package_info.get_remote_revision()
+	else:
+		rev = package_info.get_installed_revision(workspace)
+	print("-" * 48)
+	print("    " + rev)
+	print("-" * 48)
 
 def _do_install(workspace, silent, package_name_ref, force, shallow, optional):
 	packs = load_all_packages(workspace, silent)
@@ -240,15 +237,6 @@ def _do_list(workspace : str, silent : bool, showall : bool, showdef : bool):
 			print(str(index).rjust(3) + " | " + n.ljust(maxname," ") + extra_info)
 			index += 1
 
-
-def _do_install_command(workspace, silent, package):
-	packs = load_all_packages(workspace, silent)
-	package_info = packs.find(package)
-	if (package_info == None):
-		raise Exception("Could not find package: " + package)
-
-	print(package_info.generate_install_command())
-
 def _exec_action(workspace, args):
 
 	originalDirectory = os.getcwd()
@@ -268,8 +256,8 @@ def _exec_action(workspace, args):
 		_do_list(workspace, args.quiet, args.showall, args.showdef)
 	elif acc == "remove":
 		_do_remove(workspace, args.quiet, args.name)
-	elif acc == "install-command":
-		_do_install_command(workspace, args.quiet, args.name)
+	elif acc == "revision":
+		_do_revision(workspace, args.quiet, args.remoterev, args.name)
 
 	os.chdir(originalDirectory)
 
@@ -307,17 +295,22 @@ def main():
 	install_parser.add_argument('-k', '--skip', dest='skip', action='store_true', help="Skip packages that are already installed")
 	install_parser.add_argument('names', nargs='*', help='The namse of the package to install, see "list" command.')
 
-	install_command_parser = subparsers.add_parser('install-command', description='prints a command in terminal which allows you to install the package from a terminal')
-	install_command_parser.set_defaults(action='install-command')
-	install_command_parser.add_argument('name', default=None, help='The name of the package to install, see "list" command.')
-
 	refresh_parser = subparsers.add_parser('refresh', description='Handles the removal of retarded garbage, run it at least one when you start working.')
 	refresh_parser.set_defaults(action='refresh')
 	refresh_parser.add_argument('-f', '--fast', dest='fast', action='store_true', help="Skip some steps in the refresh process to avoid waiting on large repositories")
 
 	do_parser = subparsers.add_parser('do', description='Executes an action in the package (if found)')
 	do_parser.set_defaults(action='do')
-	do_parser.add_argument('name', default=None, help='The function name to be calle  ')
+	do_parser.add_argument('name', default=None, help='The function name to be called')
+
+	revision_parser = subparsers.add_parser('revision', description='Prints the current revision of a package')
+	revision_parser.set_defaults(action='revision')
+	revision_parser.add_argument('name', default=None, help='The package name')
+
+	revision_parser = subparsers.add_parser('revision', description='Prints the current revision of a package')
+	revision_parser.set_defaults(action='revision')
+	revision_parser.add_argument('-r', '--remote', dest='remoterev', action='store_true', help="Returns the remote revision")
+	revision_parser.add_argument('name', default=None, help='The package name')
 
 	clean_parser = subparsers.add_parser('clean', description='Removes useless files from the workspace')
 	clean_parser.set_defaults(action='clean')

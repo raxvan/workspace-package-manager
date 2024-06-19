@@ -1,21 +1,30 @@
 #!/bin/bash
 set -e -o pipefail
 
+cd /repo/build/pySecretsVault
+pip install .
+
 cd /repo
 pip install .
 
-cd /repo/tests
+cd /repo/build
+
+rm -rf ./vault_data ||:
+rm -rf ./vault_config ||:
 rm -rf ./_tests_workspace ||:
-mkdir _tests_workspace
 
-
+mkdir -p vault_data
+mkdir -p vault_config
+mkdir -p _tests_workspace
 
 echo "---------------------------------------------- STARTING VAULT:"
-/bin/sh /pySecretsVault/vaultserver/entrypoint.sh > /repo/tests/_tests_workspace/output.log 2>&1 &
+cd /repo/build/vault_config
+vault config-create-unsafe
+/bin/sh /repo/build/pySecretsVault/vaultserver/entrypoint.sh > /repo/build/vaultlog.log 2>&1 &
 
 sleep 5
 
-echo "---------------------------------------------- TEST 1:"
+echo "---------------------------------------------- (LIST1):"
 cd /repo/tests/workspace
 vault set encoded_definition.jv testpass
 
@@ -25,15 +34,18 @@ wpm
 cd /repo/tests/workspace
 wpm list -d
 
-echo "---------------------------------------------- TEST 2:"
+echo "---------------------------------------------- (LIST2):"
 export WPM_SEARCH_LOCATIONS=/repo/tests/bucket1:/repo/tests/bucket2
-export WPM_WORKSPACE_PATH=/repo/tests/_tests_workspace
+export WPM_WORKSPACE_PATH=/repo/build/_tests_workspace
 wpm -q list -a
 
-echo "---------------------------------------------- TEST 4(INSTALL):"
+echo "---------------------------------------------- (INSTALL):"
 wpm -q install pack-pyr
 wpm -q list -a -d
 wpm -q install pack-pywr pack-json1 pack-json2
 wpm -q list
-echo "---------------------------------------------- TEST 5(REFRESH):"
+echo "---------------------------------------------- (REFRESH):"
 wpm refresh
+
+wpm -q revision pack-pyr
+wpm -q revision -r pack-pyr

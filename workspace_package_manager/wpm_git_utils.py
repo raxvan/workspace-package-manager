@@ -2,9 +2,11 @@
 
 import os
 import sys
-import subprocess
 
 from . import wpm_internal_utils
+
+import git
+
 # stupid git problems:
 # https://stackoverflow.com/questions/34820975/git-clone-redirect-stderr-to-stdout-but-keep-errors-being-written-to-stderr
 # https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html
@@ -33,6 +35,12 @@ def download_github_repository(destination_path, zipurl, token, branch_name):
 			shutil.copyfileobj(zf, of)
 			zf.close()
 			of.close()
+
+def get_current_revision(repo_path):
+	repo = git.Repo(repo_path)
+	current_commit = repo.head.commit
+	return current_commit.hexsha
+
 
 def get_git_delta_cwd(branch, abs_path):
 	delta = wpm_internal_utils.run_silent_command("git rev-list --left-right --count " + branch + "...origin/" + branch, abs_path).replace("\n", "").replace("\t"," ")
@@ -246,13 +254,33 @@ def install_git_entry(workspace, entry):
 		print(f"Error:{e}")
 		return False
 
-def create_install_command(url, model, name):
-	if model.locked != None:
-		command = ""
-		command += f"git clone {url} {name};"
-		command += f"git checkout {model.locked};"
+def get_installed_revision(workspace, entry):
+	install_folder = entry.get_install_path(workspace)
+	if not os.path.exists(install_folder):
+		return None
 
-		return command
+	return get_current_revision(install_folder)
 
-	else:
-		return f"git clone --branch {model.active_branch} --single-branch --depth 1 {url} {name};"
+def get_remote_revision(branch, entry):
+	url = entry.get_clone_url()
+	
+	result = wpm_internal_utils.run_silent_command(f"git ls-remote {url}", ".").replace("\r\n","\n")
+
+	lines = result.split("\n")
+	for line in lines:
+		line = line.strip()
+		if line.endswith(branch):
+			return line.split("\t")[0].strip()
+
+	return None
+
+#def create_install_command(url, model, name):
+#	if model.locked != None:
+#		command = ""
+#		command += f"git clone {url} {name};"
+#		command += f"git checkout {model.locked};"
+#
+#		return command
+#
+#	else:
+#		return f"git clone --branch {model.active_branch} --single-branch --depth 1 {url} {name};"
