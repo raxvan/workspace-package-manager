@@ -305,10 +305,6 @@ def main():
 
 	revision_parser = subparsers.add_parser('revision', description='Prints the current revision of a package')
 	revision_parser.set_defaults(action='revision')
-	revision_parser.add_argument('name', default=None, help='The package name')
-
-	revision_parser = subparsers.add_parser('revision', description='Prints the current revision of a package')
-	revision_parser.set_defaults(action='revision')
 	revision_parser.add_argument('-r', '--remote', dest='remoterev', action='store_true', help="Returns the remote revision")
 	revision_parser.add_argument('name', default=None, help='The package name')
 
