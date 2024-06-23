@@ -132,7 +132,11 @@ class BasePackage(object):
 
 	def install(self, workspace):
 		#returns True/False if install was successfull
-		return False
+		raise Exception("Missing install implementation!")
+
+	def update(self, workspace):
+		#returns True/False if update is sucessfull, 
+		raise Exception("Missing update implementation!")
 
 	def get_installed_revision(self, workspace):
 		#returns sha 256 revision
@@ -170,6 +174,10 @@ def _get_git_utils():
 	return wpm_git_utils
 
 class GitEntry(BasePackage):
+	ClassName = "git"
+	def get_classname(self):
+		return GitEntry.ClassName
+
 	def __init__(self, name, bucket):
 		BasePackage.__init__(self, name, bucket)
 		
@@ -226,7 +234,12 @@ class GitEntry(BasePackage):
 
 	def install(self, workspace):
 		u = _get_git_utils()
-		return u.install_git_entry(workspace, self);
+		return u.install_git_entry(workspace, self)
+
+	def update(self, workspace):
+		u = _get_git_utils()
+		return u.update_git_entry(workspace, self)
+
 
 	def get_installed_revision(self, workspace):
 		u = _get_git_utils()
@@ -260,10 +273,15 @@ class GitEntry(BasePackage):
 #######################################################################################################
 
 class LocalEntry(BasePackage):
+	ClassName = "local"
+	def get_classname(self):
+		return LocalEntry.ClassName
+
 	def __init__(self, name, bucket):
 		BasePackage.__init__(self, name, bucket)
 		
 	#######################################################################################################
+
 
 	def init_from_dict(self, params):
 		return True
@@ -284,6 +302,10 @@ class LocalEntry(BasePackage):
 #######################################################################################################
 
 class ZipEntry(BasePackage):
+	ClassName = "zip"
+	def get_classname(self):
+		return ZipEntry.ClassName
+
 	def __init__(self, name, bucket):
 		BasePackage.__init__(self, name, bucket)
 		self.url = None

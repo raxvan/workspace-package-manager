@@ -110,11 +110,11 @@ class PackageDatabaseConstructor(object):
 		return entry
 
 	def create_entry(self, classname, package_name):
-		if classname == "git":
+		if classname == wpm_package_handlers.GitEntry.ClassName:
 			return wpm_package_handlers.GitEntry(package_name, self.active_bucket)
-		elif classname == "local":
+		elif classname == wpm_package_handlers.LocalEntry.ClassName:
 			return wpm_package_handlers.LocalEntry(package_name, self.active_bucket)
-		elif classname == "zip":
+		elif classname == wpm_package_handlers.ZipEntry.ClassName:
 			return wpm_package_handlers.ZipEntry(package_name, self.active_bucket)
 		else:
 			if self.logger != None:

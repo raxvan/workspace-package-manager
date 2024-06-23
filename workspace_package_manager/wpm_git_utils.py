@@ -173,6 +173,13 @@ def git_user_command(workspace, entry):
 
 	return command
 
+def git_update_command(workspace, entry):
+	path = entry.get_install_path(workspace);
+
+	command = f"cd {path}; git pull;"
+
+	return command
+
 def install_bucket(url, abspath, folder):
 	from git import Repo
 	from git.exc import GitCommandError
@@ -273,6 +280,18 @@ def get_remote_revision(branch, entry):
 			return line.split("\t")[0].strip()
 
 	return None
+
+def update_git_entry(workspace, entry):
+	command = ""		
+	command += git_add_safe_command(workspace, entry)
+	command += git_user_command(workspace, entry)
+	command += git_update_command(workspace, entry)
+
+	rc = wpm_internal_utils.run_command_and_wait(command, workspace, True)
+	if rc != 0:
+		return False
+
+	return True
 
 #def create_install_command(url, model, name):
 #	if model.locked != None:

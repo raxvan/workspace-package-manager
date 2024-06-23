@@ -19,7 +19,7 @@ mkdir -p _tests_workspace
 
 echo "---------------------------------------------- STARTING VAULT:"
 cd /repo/build/vault_config
-vault config-create-unsafe
+vault config-create-new
 /bin/sh /repo/build/pySecretsVault/vaultserver/entrypoint.sh > /repo/build/vaultlog.log 2>&1 &
 
 sleep 5
@@ -49,3 +49,6 @@ wpm refresh
 
 wpm -q revision pack-pyr
 wpm -q revision -r pack-pyr
+
+
+wpm update pack-pyr

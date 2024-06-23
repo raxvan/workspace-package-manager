@@ -72,6 +72,7 @@ def _do_revision(workspace, silent, remoterev, package_name_ref):
 		rev = package_info.get_remote_revision()
 	else:
 		rev = package_info.get_installed_revision(workspace)
+
 	print("-" * 48)
 	print("    " + rev)
 	print("-" * 48)
@@ -95,6 +96,21 @@ def _do_refresh(workspace, silent, fast):
 			package_info.sanitize(workspace, fast)
 
 	print("Done.")
+
+def _do_update(workspace, silent, name):
+	packs = load_all_packages(workspace, silent)
+	package_info = packs.find(name)
+	if package_info != None:
+		ipath = package_info.get_install_path(workspace)
+		if os.path.exists(ipath):
+			print(f"UPDATING: {package_info.name} ...")
+			package_info.update(workspace)
+			print("Done.")
+		else:
+			print(f"MISSING INSTALL: wpm install {name} ...")
+	else:
+		print(f"MISSING PACKAGE: {name} ...")
+
 
 def clean_files_recursive(directory):
 	for i in os.listdir(directory):
@@ -246,6 +262,8 @@ def _exec_action(workspace, args):
 		_do_install(workspace, args.quiet, args.names, args.force, args.shallow, args.skip)
 	elif acc == "refresh":
 		_do_refresh(workspace, args.quiet, args.fast)
+	elif acc == "update":
+		_do_update(workspace, args.quiet, args.name)
 	elif acc == "clean":
 		_do_clean(workspace, args.quiet)
 	if acc == "do":
@@ -302,6 +320,10 @@ def main():
 	do_parser = subparsers.add_parser('do', description='Executes an action in the package (if found)')
 	do_parser.set_defaults(action='do')
 	do_parser.add_argument('name', default=None, help='The function name to be called')
+
+	update_parser = subparsers.add_parser('update', description='Updates the package to latest')
+	update_parser.set_defaults(action='update')
+	update_parser.add_argument('name', default=None, help='Package name')
 
 	revision_parser = subparsers.add_parser('revision', description='Prints the current revision of a package')
 	revision_parser.set_defaults(action='revision')
