@@ -180,6 +180,13 @@ def git_update_command(workspace, entry):
 
 	return command
 
+def git_fetch_and_checkout_command(workspace, entry):
+	path = entry.get_install_path(workspace);
+
+	command = f"cd {path}; git fetch; git checkout {entry.model.locked};"
+
+	return command
+
 def install_bucket(url, abspath, folder):
 	from git import Repo
 	from git.exc import GitCommandError
@@ -285,7 +292,11 @@ def update_git_entry(workspace, entry):
 	command = ""		
 	command += git_add_safe_command(workspace, entry)
 	command += git_user_command(workspace, entry)
-	command += git_update_command(workspace, entry)
+	
+	if entry.model.locked != None and entry.model.locked != "":
+		command += git_fetch_and_checkout_command(workspace, entry)
+	else:
+		command += git_update_command(workspace, entry)
 
 	rc = wpm_internal_utils.run_command_and_wait(command, workspace, True)
 	if rc != 0:
