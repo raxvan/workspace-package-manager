@@ -112,24 +112,6 @@ def _do_update(workspace, silent, name):
 		print(f"MISSING PACKAGE: {name} ...")
 
 
-def clean_files_recursive(directory):
-	for i in os.listdir(directory):
-		if i == ".git":
-			continue
-
-		path = os.path.join(directory, i)
-		if os.path.isdir(path):
-			clean_files_recursive(path)
-
-		elif i == ".DS_Store":
-			print(f"removing: {path}")
-			os.remove(path)
-
-def _do_clean(workspace, silent):
-	print("Cleaning files...")
-	clean_files_recursive(workspace)
-	print("Done.")
-
 def print_package_missing_status(pname):
 	print("    " + (pname + " ").ljust(16,"-") + "> Missing...")
 
@@ -222,13 +204,18 @@ def _do_status(workspace, silent, name, fast):
 	#		if uc != None:
 	#			print(uc)
 
-def _do_list(workspace : str, silent : bool, showall : bool, showdef : bool):
+def _do_list(workspace : str, silent : bool, args):
+
+	_showall = args.showall
+	_showdef = args.showdef
+	_showrev = args.showrev
+	_showloc = False
 
 	packs = load_all_packages(workspace, silent)
 
 	names = sorted(packs.get_all_names())
 	if not names:
-		print("No packages found.")
+		print("Missing packages")
 		return
 	maxname = max([len(n) for n in names]) + 4
 
@@ -236,22 +223,37 @@ def _do_list(workspace : str, silent : bool, showall : bool, showdef : bool):
 	for n in names:
 		
 		p = packs.get(n)
-
-		extra_info = ""
-		if showdef == True:
-			extra_info += f" def:{p.get_definition_location()}"
-		
 		install_location = p.get_install_path(workspace)
 		exists = os.path.exists(install_location)
 
+		details = []
+
+		if _showdef == True:
+			details.append("def:" + p.get_definition_location())
+
 		if exists == True:
-			extra_info += f" installed:{install_location}"
-			print(str(index).rjust(3) + " | " + n.ljust(maxname," ") + extra_info)
-			index += 1
-		elif showall == True:
-			extra_info += f" missing:{install_location}"
-			print(str(index).rjust(3) + " | " + n.ljust(maxname," ") + extra_info)
-			index += 1
+			if _showloc == True:
+				details.append("installed:"+ install_location)
+			if _showrev == True:
+				details.append("rev:" + p.get_installed_revision(workspace))
+		elif _showall == True:
+			if _showloc == True:
+				extra_info.append("missing:"+ install_location)
+		else:
+			continue
+
+		header = str(index).rjust(3) + " | " + n.rjust(maxname," ")
+		if len(details) == 0:
+			print(header)
+		elif len(details) == 1:
+			print(header + " | " + details[0])
+		else:
+			j = " " * (len(header) + 3)
+			j = "\n" + j
+			j = j.join(details)
+			print(header + " > " + j)
+
+		index += 1
 
 def _exec_action(workspace, args):
 
@@ -264,14 +266,10 @@ def _exec_action(workspace, args):
 		_do_refresh(workspace, args.quiet, args.fast)
 	elif acc == "update":
 		_do_update(workspace, args.quiet, args.name)
-	elif acc == "clean":
-		_do_clean(workspace, args.quiet)
-	if acc == "do":
-		_do_action(workspace, args.quiet, args.names, args.force, args.shallow, args.skip)
 	elif acc == "status":
 		_do_status(workspace, args.quiet, args.name, args.fast)
 	elif acc == "list":
-		_do_list(workspace, args.quiet, args.showall, args.showdef)
+		_do_list(workspace, args.quiet, args)
 	elif acc == "remove":
 		_do_remove(workspace, args.quiet, args.name)
 	elif acc == "revision":
@@ -313,13 +311,9 @@ def main():
 	install_parser.add_argument('-k', '--skip', dest='skip', action='store_true', help="Skip packages that are already installed")
 	install_parser.add_argument('names', nargs='*', help='The namse of the package to install, see "list" command.')
 
-	refresh_parser = subparsers.add_parser('refresh', description='Handles the removal of retarded garbage, run it at least one when you start working.')
+	refresh_parser = subparsers.add_parser('refresh', description='Handles the removal of retarded garbage, run it at least once when you start working.')
 	refresh_parser.set_defaults(action='refresh')
 	refresh_parser.add_argument('-f', '--fast', dest='fast', action='store_true', help="Skip some steps in the refresh process to avoid waiting on large repositories")
-
-	do_parser = subparsers.add_parser('do', description='Executes an action in the package (if found)')
-	do_parser.set_defaults(action='do')
-	do_parser.add_argument('name', default=None, help='The function name to be called')
 
 	update_parser = subparsers.add_parser('update', description='Updates the package to latest')
 	update_parser.set_defaults(action='update')
@@ -330,13 +324,11 @@ def main():
 	revision_parser.add_argument('-r', '--remote', dest='remoterev', action='store_true', help="Returns the remote revision")
 	revision_parser.add_argument('name', default=None, help='The package name')
 
-	clean_parser = subparsers.add_parser('clean', description='Removes useless files from the workspace')
-	clean_parser.set_defaults(action='clean')
-
 	list_parser = subparsers.add_parser('list', description='Lists package information.')
 	list_parser.set_defaults(action='list')
 	list_parser.add_argument('-a', '--all', dest='showall', action='store_true', help="Show all packages from database")
-	list_parser.add_argument('-d', '--def', dest='showdef', action='store_true', help="Show package definition")
+	list_parser.add_argument('-d', '--def', dest='showdef', action='store_true', help="Show package definition.")
+	list_parser.add_argument('-r', '--rev', dest='showrev', action='store_true', help="shwo package revision.")
 
 	status_parser = subparsers.add_parser('status', description='Shows status of packages in workspace and workspace')
 	status_parser.set_defaults(action='status')

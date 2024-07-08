@@ -41,7 +41,7 @@ wpm -q list -a
 
 echo "---------------------------------------------- (INSTALL):"
 wpm -q install pack-pyr
-wpm -q list -a -d
+wpm -q list -a -d -r
 wpm -q install pack-pywr pack-json1 pack-json2
 wpm -q list
 echo "---------------------------------------------- (REFRESH):"
