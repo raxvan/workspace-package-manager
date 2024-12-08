@@ -286,6 +286,17 @@ class PackageDatabase(object):
 
 		self.properties = {}
 
+	def load_workspace(self, workspace):
+
+		config_path = os.path.join(workspace, ".wpm", "config.json")
+		try:
+			if os.path.exists(config_path):
+				with open(config_path, "r") as f:
+					self.properties = json.load(f)
+
+		except Exception as e:
+			raise Exception(f"{_colors.RED}[ERROR]{_colors.END} Failed to load config {config_path}\n{e}")
+
 	def get_all_names(self):
 		return [x for x,_ in self.db.items()]
 
@@ -297,7 +308,6 @@ class PackageDatabase(object):
 
 	def find(self, name):
 		return self.db.get(name, None)
-
 
 	def get_all_properties(self):
 		return self.properties

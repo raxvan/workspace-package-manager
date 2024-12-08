@@ -30,6 +30,7 @@ def get_package_search_locations(workspace):
 
 def load_all_packages(workspace, silent):
 	packs = wpm_package_database.PackageDatabase()
+	packs.load_workspace(workspace)
 
 	logger = print
 	if silent:
@@ -257,26 +258,30 @@ def _do_list(workspace : str, silent : bool, args):
 		index += 1
 
 def _exec_action(workspace, args):
+	try:
+		originalDirectory = os.getcwd()
 
-	originalDirectory = os.getcwd()
+		acc = args.action
+		if acc == "install":
+			_do_install(workspace, args.quiet, args.names, args.force, args.shallow, args.skip)
+		elif acc == "refresh":
+			_do_refresh(workspace, args.quiet, args.fast)
+		elif acc == "update":
+			_do_update(workspace, args.quiet, args.name)
+		elif acc == "status":
+			_do_status(workspace, args.quiet, args.name, args.fast)
+		elif acc == "list":
+			_do_list(workspace, args.quiet, args)
+		elif acc == "remove":
+			_do_remove(workspace, args.quiet, args.name)
+		elif acc == "revision":
+			_do_revision(workspace, args.quiet, args.remoterev, args.name)
 
-	acc = args.action
-	if acc == "install":
-		_do_install(workspace, args.quiet, args.names, args.force, args.shallow, args.skip)
-	elif acc == "refresh":
-		_do_refresh(workspace, args.quiet, args.fast)
-	elif acc == "update":
-		_do_update(workspace, args.quiet, args.name)
-	elif acc == "status":
-		_do_status(workspace, args.quiet, args.name, args.fast)
-	elif acc == "list":
-		_do_list(workspace, args.quiet, args)
-	elif acc == "remove":
-		_do_remove(workspace, args.quiet, args.name)
-	elif acc == "revision":
-		_do_revision(workspace, args.quiet, args.remoterev, args.name)
-
-	os.chdir(originalDirectory)
+		os.chdir(originalDirectory)
+	except Exception as e:
+		print("-" * 120)
+		print(f"{clrs.RED}<<< FAILED >>>{clrs.END}")
+		print(str(e))
 
 def find_wpm_directory(start_path):
 	current_path = os.path.abspath(start_path)
