@@ -41,7 +41,7 @@ class PackageDatabaseConstructor(object):
 		abspath = os.path.join(ipath, name)
 		
 		if not os.path.exists(abspath):
-			if property_check != None && self.active_bucket.has_property(property_check):
+			if property_check != None and self.active_bucket.has_property(property_check):
 				if self.logger != None:
 					self.logger(f"   {_colors.YELLOW}!ignoring {_colors.CYAN}{name}{_colors.YELLOW} due to {property_check} missing ...{_colors.END}")
 				return
