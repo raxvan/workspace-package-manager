@@ -19,14 +19,17 @@ class BucketDefinition():
 		self.abspath = abs_path
 		
 		self.props = None
-		
+
+	def load_json_properties(self, jdict):
+		self.props = jdict
 		
 	def get_property(self, name):
 		if self.props != None:
 			return self.props.get(name, None)
 		if self.parent != None:
 			return self.parent.get_property(name)
-		return None
+
+		return self.database.get_property(name)
 
 	def set_property(self, pname, pvalue):
 		if self.props == None:
@@ -34,31 +37,38 @@ class BucketDefinition():
 
 		self.props[pname] = str(pvalue)
 
-	def get_recursive_properties(self):
+	def has_property(self, pname):
+		if name in self.props:
+			return True
+
+		if self.parent != None:
+			return self.parent.has_property(pname)
+		
+		return self.database.has_property(pname)
+
+	def get_all_properties(self):
 		props = {}
 		if self.parent != None:
-			props.update(self.parent.get_recursive_properties())
+			props.update(self.parent.get_all_properties())
+		else:
+			props.update(self.database.get_all_properties())
 
 		if self.props != None:
 			props.update(self.props)
 
 		return props
 
-	def format_string(self, s):
-		if self.props != None:
-			try:
-				return s.format(**self.props)
-			except KeyError:
-				pass
-		return s
+	def format_string_for_bucket(self, s):
+		props = self.get_all_properties()
+		#while True:
+		try:
+			return s.format(**props)
+		except KeyError as e:
 
-	def load_json_properties(self, jdict):
-		self.props = jdict
+			raise Exception(f"Missing key in string {s}:{e}")
 
-	def get_flat_properties(self):
-		rp = self.get_recursive_properties()
-		rp.update(self.database.fetch_properties([k for k in rp.keys()]))
-		return rp
+		except:
+			raise
 
 
 #######################################################################################################
@@ -158,12 +168,7 @@ class BasePackage(object):
 		return self.actions
 
 	def format_string(self, s):
-		props = self.bucket.get_flat_properties()		
-		try:
-			return s.format(**props)
-		except KeyError as e:
-			raise Exception(f"Missing key in string {s}:{e}")
-
+		return self.bucket.format_string_for_bucket(s)
 
 #######################################################################################################
 #######################################################################################################

@@ -9,8 +9,6 @@ import zipfile
 import time
 import shutil
 
-import secretsvault
-
 from . import wpm_internal_utils
 from . import wpm_package_handlers
 
@@ -29,7 +27,7 @@ class PackageDatabaseConstructor(object):
 		abs_path = os.path.join(active_folder, rel_path_to_dir);
 		self.load_bucket(abs_path)
 
-	def add_github_bucket(self, vault_key, name, github_path, install_path = None):
+	def add_github_bucket(self, property_check, name, github_path, install_path = None):
 		
 		ipath = None
 		if install_path != None:
@@ -43,11 +41,9 @@ class PackageDatabaseConstructor(object):
 		abspath = os.path.join(ipath, name)
 		
 		if not os.path.exists(abspath):
-			vault = self.database.vault
-			scr = vault[vault_key]
-			if scr == None:
+			if property_check != None && self.active_bucket.has_property(property_check):
 				if self.logger != None:
-					self.logger(f"   {_colors.YELLOW}!ignoring {_colors.CYAN}{name}{_colors.YELLOW} due to {vault_key} missing ...{_colors.END}")
+					self.logger(f"   {_colors.YELLOW}!ignoring {_colors.CYAN}{name}{_colors.YELLOW} due to {property_check} missing ...{_colors.END}")
 				return
 			else:
 				if self.logger != None:
@@ -179,30 +175,31 @@ class PackageDatabaseConstructor(object):
 
 		return True
 
-	def load_json_vault(self, abs_path_to_file):
-
-		if self._push_definition(abs_path_to_file) == False:
-			return False
-
-		active_folder = self.active_bucket.folder
-		if self.logger != None:
-			self.logger(f"     {_colors.CYAN}{os.path.relpath(abs_path_to_file, active_folder)}{_colors.END}")
-
-		active_file = self.active_bucket.file
-		file_secret = self.database.vault[active_file]
-		if file_secret == None:
-			return False
-
-		json_content = secretsvault.vault_decode_file(file_secret, abs_path_to_file, None)
-		try:
-			json_content = json.loads(json_content)
-		except:
-			raise Exception(f"Invalid json {abs_path_to_file}\n")
-
-		self._load_json_content(json_content)
-
-		self._pop_definition(abs_path_to_file)
-		return True
+	#def load_encrypted_json(self, abs_path_to_file):
+	#
+	#	if self._push_definition(abs_path_to_file) == False:
+	#		return False
+	#
+	#	active_folder = self.active_bucket.folder
+	#	if self.logger != None:
+	#		self.logger(f"     {_colors.CYAN}{os.path.relpath(abs_path_to_file, active_folder)}{_colors.END}")
+	#
+	#	active_file = self.active_bucket.file
+	#	file_secret = self.database.vault[active_file]
+	#	if file_secret == None:
+	#		return False
+	#
+	#	json_content = secretsvault.vault_decode_file(file_secret, abs_path_to_file, None)
+	#
+	#	try:
+	#		json_content = json.loads(json_content)
+	#	except:
+	#		raise Exception(f"Invalid json {abs_path_to_file}\n")
+	#
+	#	self._load_json_content(json_content)
+	#
+	#	self._pop_definition(abs_path_to_file)
+	#	return True
 	
 	def load_constructor(self, abs_path_to_file):
 		if self._push_definition(abs_path_to_file) == False:
@@ -245,8 +242,8 @@ class PackageDatabaseConstructor(object):
 			loaded = self.load_json(abs_item_path)
 		elif abs_item_path.endswith(".py"):
 			loaded = self.load_constructor(abs_item_path)
-		elif abs_item_path.endswith(".jv"):
-			loaded = self.load_json_vault(abs_item_path)
+		#elif abs_item_path.endswith(".ejson"):
+		#	loaded = self.load_encrypted_json(abs_item_path)
 		else:
 			#silent skip
 			return
@@ -286,7 +283,8 @@ class PackageDatabase(object):
 		
 		self.db = {}
 		self.modules = set()
-		self.vault = secretsvault.OpenVault()
+
+		self.properties = {}
 
 	def get_all_names(self):
 		return [x for x,_ in self.db.items()]
@@ -300,8 +298,18 @@ class PackageDatabase(object):
 	def find(self, name):
 		return self.db.get(name, None)
 
+
+	def get_all_properties(self):
+		return self.properties
+
+	def has_property(self, pname):
+		if pname in self.properties:
+			return True
+		return False
+
 	def fetch_properties(self, proplist):
-		return self.vault.query(proplist)
+		if self.decoder != None:
+			return self.decoder.query(proplist)
 
 	#######################################################################################################
 	#######################################################################################################

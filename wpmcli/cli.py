@@ -15,17 +15,18 @@ from workspace_package_manager import wpm_package_controller
 #####################################################################################################
 
 clrs = wpm_internal_utils.Colors
-_search_locations = os.environ.get("WPM_SEARCH_LOCATIONS", None)
-_worskace_path = os.environ.get("WPM_WORKSPACE_PATH", None)
+
+_env_search_locations = os.environ.get("WPM_SEARCH_LOCATIONS", None)
+_env_worskace_path = os.environ.get("WPM_WORKSPACE_PATH", None)
 
 def validate_search_locations(workspace):
-	if _search_locations == None:
+	if _env_search_locations == None:
 		return "No bucket search locations found"
 
 	return None
 
 def get_package_search_locations(workspace):
-	return _search_locations.split(":")
+	return _env_search_locations.split(":")
 
 def load_all_packages(workspace, silent):
 	packs = wpm_package_database.PackageDatabase()
@@ -277,19 +278,48 @@ def _exec_action(workspace, args):
 
 	os.chdir(originalDirectory)
 
+def find_wpm_directory(start_path):
+	current_path = os.path.abspath(start_path)
+	
+	while True:
+		wpm_path = os.path.join(current_path, '.wpm')
+		if os.path.isdir(wpm_path):
+			return current_path
+		
+		parent_path = os.path.dirname(current_path)
+		
+		if parent_path == current_path:
+			break
+		
+		current_path = parent_path
+	
+	return None
+
+
 def validate_workspace():
-	workspace = _worskace_path
+	workspace = None
+
+	if _env_worskace_path != None && _env_worskace_path != "":
+		workspace = _env_worskace_path
+
+		if not os.path.exists(workspace):
+			print(f"WPM_WORKSPACE_PATH variable points to missing folder {workspace}")
+			exit(-1)
+
 	if workspace == None:
-		workspace = os.getcwd()
-	elif not os.path.exists(workspace):
-		print(f"WPM_WORKSPACE_PATH variable points to missing folder {workspace}")
-		exit(-1)
+		cwd = os.getcwd()
+		workspace = find_wpm_directory(cwd)
+		if workspace == None:
+			print(f"{clrs.LIGHT_RED}WARNING:{clrs.YELLOW} workspace path is set to cwd: {workspace}{clrs.END}")
+			workspace = cwd
 
 	_sl_check = validate_search_locations(workspace)
 
 	if _sl_check != None:
 		print(_sl_check)
 		exit(-1)
+
+	os.makedirs(os.path.join(workspace,".wpm"), exist_ok = True)
 
 	return workspace
 

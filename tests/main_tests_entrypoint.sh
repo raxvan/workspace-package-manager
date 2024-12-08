@@ -1,32 +1,19 @@
 #!/bin/bash
 set -e -o pipefail
 
-cd /repo/build/pySecretsVault
-pip install .
-
 cd /repo
 pip install .
 
 cd /repo/build
 
-rm -rf ./vault_data ||:
-rm -rf ./vault_config ||:
 rm -rf ./_tests_workspace ||:
 
-mkdir -p vault_data
-mkdir -p vault_config
 mkdir -p _tests_workspace
-
-echo "---------------------------------------------- STARTING VAULT:"
-cd /repo/build/vault_config
-vault config-create-new
-/bin/sh /repo/build/pySecretsVault/vaultserver/entrypoint.sh > /repo/build/vaultlog.log 2>&1 &
-
-sleep 5
 
 echo "---------------------------------------------- (LIST1):"
 cd /repo/tests/workspace
-vault set encoded_definition.jv testpass
+
+echo "---->>>>> encoded_definition.jv password: 'testpass' !!!"
 
 cd /repo/tests
 export WPM_SEARCH_LOCATIONS=/repo/tests/workspace

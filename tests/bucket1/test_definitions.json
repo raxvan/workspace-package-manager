@@ -7,7 +7,7 @@
 	"pack-json1" : {
 		"class" : "git",
 		"active-branch" : "main",
-		"url": "https://github.com/raxvan/pySecretsVault"
+		"url": "https://github.com/raxvan/workspace-package-manager"
 	}
 		
 }

@@ -8,8 +8,6 @@ TEST_ENV_NAME=wpm-tests
 
 docker build -t $TEST_ENV_NAME -f $THIS_DIR/test-env.dockerfile $THIS_DIR
 
-mkdir -p VaultTestVolume
-
 docker run \
 	--rm \
 	-it \
