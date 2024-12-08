@@ -299,7 +299,7 @@ def find_wpm_directory(start_path):
 def validate_workspace():
 	workspace = None
 
-	if _env_worskace_path != None && _env_worskace_path != "":
+	if _env_worskace_path != None and _env_worskace_path != "":
 		workspace = _env_worskace_path
 
 		if not os.path.exists(workspace):
