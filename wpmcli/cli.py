@@ -392,5 +392,4 @@ def main():
 		for p in get_package_search_locations(workspace):
 			print(f"\t-> {p}")
 	
-	
 

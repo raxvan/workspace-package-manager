@@ -292,7 +292,7 @@ class PackageDatabase(object):
 		try:
 			if os.path.exists(config_path):
 				with open(config_path, "r") as f:
-					self.properties = json.load(f)
+					self.properties.update(json.load(f))
 
 		except Exception as e:
 			raise Exception(f"{_colors.RED}[ERROR]{_colors.END} Failed to load config {config_path}\n{e}")
