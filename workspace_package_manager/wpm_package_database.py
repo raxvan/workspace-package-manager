@@ -96,6 +96,9 @@ class PackageDatabaseConstructor(object):
 	def set(self, pname, pvalue = ""):
 		self.active_bucket.set_property(pname, pvalue);
 
+	def require(self, pname):
+		self.active_bucket.fetch_requirement(pname)
+
 	def _add_entry(self, entry, contents):
 		if entry.deserialize(contents) == False:
 			if self.logger != None:
@@ -144,6 +147,10 @@ class PackageDatabaseConstructor(object):
 	#######################################################################################################
 	#######################################################################################################
 	def _load_json_content(self, content):
+		bdata = content.get(".require", None)
+		if bdata != None:
+			self.active_bucket.load_json_requirements(bdata)
+
 		bdata = content.get(".bucket", None)
 		if bdata != None:
 			self.active_bucket.load_json_properties(bdata)
@@ -175,31 +182,32 @@ class PackageDatabaseConstructor(object):
 
 		return True
 
-	#def load_encrypted_json(self, abs_path_to_file):
-	#
-	#	if self._push_definition(abs_path_to_file) == False:
-	#		return False
-	#
-	#	active_folder = self.active_bucket.folder
-	#	if self.logger != None:
-	#		self.logger(f"     {_colors.CYAN}{os.path.relpath(abs_path_to_file, active_folder)}{_colors.END}")
-	#
-	#	active_file = self.active_bucket.file
-	#	file_secret = self.database.vault[active_file]
-	#	if file_secret == None:
-	#		return False
-	#
-	#	json_content = secretsvault.vault_decode_file(file_secret, abs_path_to_file, None)
-	#
-	#	try:
-	#		json_content = json.loads(json_content)
-	#	except:
-	#		raise Exception(f"Invalid json {abs_path_to_file}\n")
-	#
-	#	self._load_json_content(json_content)
-	#
-	#	self._pop_definition(abs_path_to_file)
-	#	return True
+	def try_load_custom_format(self, abs_path_to_file):
+		
+		if self._push_definition(abs_path_to_file) == False:
+			return False
+
+		if self.logger != None:
+			self.logger(f"     {_colors.CYAN}{os.path.relpath(abs_path_to_file, active_folder)}{_colors.END}")
+
+	
+		loaded = False
+		active_folder = self.active_bucket.folder
+		
+		fr = self.database.fetch_file_requirement(self.active_bucket.file)
+
+		if fr != None:
+			try:
+				json_content = fr.get()
+				json_content = json.loads(json_content)
+				self._load_json_content(json_content)
+			except Exception as e:
+				raise Exception(f"Failed to load {abs_path_to_file}\nEXCEPTION:{e}")
+
+			loaded = True
+	
+		self._pop_definition(abs_path_to_file)
+		return loaded
 	
 	def load_constructor(self, abs_path_to_file):
 		if self._push_definition(abs_path_to_file) == False:
@@ -237,14 +245,22 @@ class PackageDatabaseConstructor(object):
 		return False
 
 	def _load_item(self, abs_item_path):
-		loaded = False
+		loaded = None
 		if abs_item_path.endswith(".json"):
 			loaded = self.load_json(abs_item_path)
 		elif abs_item_path.endswith(".py"):
 			loaded = self.load_constructor(abs_item_path)
-		#elif abs_item_path.endswith(".ejson"):
+		#elif abs_item_path.endswith(".vet.json"):
 		#	loaded = self.load_encrypted_json(abs_item_path)
 		else:
+			for ff in self.database.fileFormats:
+				if not abs_item_path.endswith(ff):
+					continue
+
+				loaded = self.try_load_custom_format(abs_item_path)
+				break
+
+		if loaded == None:
 			#silent skip
 			return
 		
@@ -284,7 +300,8 @@ class PackageDatabase(object):
 		self.db = {}
 		self.modules = set()
 
-		self.properties = {}
+		self.factory = None
+		self.fileFormats = []
 
 	def load_workspace(self, workspace):
 
@@ -309,17 +326,20 @@ class PackageDatabase(object):
 	def find(self, name):
 		return self.db.get(name, None)
 
-	def get_all_properties(self):
-		return self.properties
+	#######################################################################################################
 
-	def has_property(self, pname):
-		if pname in self.properties:
-			return True
-		return False
+	def try_resolve(self, pname):
+		if self.factory != None:
+			return self.factory.tryResolve(pname)
 
-	def fetch_properties(self, proplist):
-		if self.decoder != None:
-			return self.decoder.query(proplist)
+		m = f"--- require:{pname} --- (empty to ignore):"
+		return input(m)
+
+	def try_file_resolve(self, filename):
+		if self.factory != None:
+			return self.factory.tryFileResolve(pname)
+
+		return None
 
 	#######################################################################################################
 	#######################################################################################################

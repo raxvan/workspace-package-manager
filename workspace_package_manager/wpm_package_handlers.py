@@ -18,10 +18,14 @@ class BucketDefinition():
 		self.folder, self.file = os.path.split(abs_path)
 		self.abspath = abs_path
 		
-		self.props = None
+		self.props = {}
 
 	def load_json_properties(self, jdict):
 		self.props = jdict
+
+	def load_json_requirements(self, l):
+		for rprop in l:
+			self.fetch_requirement(rprop)
 		
 	def get_property(self, name):
 		if self.props != None:
@@ -32,26 +36,29 @@ class BucketDefinition():
 		return self.database.get_property(name)
 
 	def set_property(self, pname, pvalue):
-		if self.props == None:
-			self.props = {}
-
 		self.props[pname] = str(pvalue)
 
 	def has_property(self, pname):
-		if name in self.props:
+		if pname in self.props:
 			return True
 
 		if self.parent != None:
 			return self.parent.has_property(pname)
 		
-		return self.database.has_property(pname)
+		return None #self.database.has_property(pname)
+
+	def fetch_requirement(self, rname):
+		if self.has_property(rname):
+			return
+
+		m = self.database.try_resolve(rname)
+		if m != None:
+			self.set_property(rname, m)
 
 	def get_all_properties(self):
 		props = {}
 		if self.parent != None:
 			props.update(self.parent.get_all_properties())
-		else:
-			props.update(self.database.get_all_properties())
 
 		if self.props != None:
 			props.update(self.props)
