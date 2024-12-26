@@ -41,6 +41,8 @@ class PackageDatabaseConstructor(object):
 		abspath = os.path.join(ipath, name)
 		
 		if not os.path.exists(abspath):
+			import pudb
+			pu.db
 			requirement = None
 			if property_check != None:
 				requirement = self.active_bucket.fetch_requirement(property_check);
