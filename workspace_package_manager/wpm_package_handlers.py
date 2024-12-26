@@ -49,11 +49,14 @@ class BucketDefinition():
 
 	def fetch_requirement(self, rname):
 		if self.has_property(rname):
-			return
+			return True
 
 		m = self.database.try_resolve(rname)
 		if m != None:
 			self.set_property(rname, m)
+			return True
+
+		return False
 
 	def get_all_properties(self):
 		props = {}

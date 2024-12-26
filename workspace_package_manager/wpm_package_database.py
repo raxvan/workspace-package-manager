@@ -41,12 +41,8 @@ class PackageDatabaseConstructor(object):
 		abspath = os.path.join(ipath, name)
 		
 		if not os.path.exists(abspath):
-			import pudb
-			pu.db
-			requirement = None
 			if property_check != None:
-				requirement = self.active_bucket.fetch_requirement(property_check);
-				if requirement == None:
+				if self.active_bucket.fetch_requirement(property_check) == False:
 					if self.logger != None:
 						self.logger(f"   {_colors.YELLOW}!ignoring {_colors.CYAN}{name}{_colors.YELLOW} due to {property_check} missing ...{_colors.END}")
 					return
@@ -102,7 +98,7 @@ class PackageDatabaseConstructor(object):
 		self.active_bucket.set_property(pname, pvalue);
 
 	def require(self, pname):
-		self.active_bucket.fetch_requirement(pname)
+		return self.active_bucket.fetch_requirement(pname)
 
 	def _add_entry(self, entry, contents):
 		if entry.deserialize(contents) == False:
