@@ -41,15 +41,18 @@ class PackageDatabaseConstructor(object):
 		abspath = os.path.join(ipath, name)
 		
 		if not os.path.exists(abspath):
-			if property_check != None and self.active_bucket.has_property(property_check):
-				if self.logger != None:
-					self.logger(f"   {_colors.YELLOW}!ignoring {_colors.CYAN}{name}{_colors.YELLOW} due to {property_check} missing ...{_colors.END}")
-				return
-			else:
-				if self.logger != None:
-					self.logger(f"   {_colors.RED}+ fetching {name} -> {ipath} {_colors.END}")
-				e = self.add_git(name, github_path).branch("main")	
-				e.install(ipath)
+			requirement = None
+			if property_check != None:
+				requirement = self.database.fetch_requirement(property_check);
+				if requirement == None:
+					if self.logger != None:
+						self.logger(f"   {_colors.YELLOW}!ignoring {_colors.CYAN}{name}{_colors.YELLOW} due to {property_check} missing ...{_colors.END}")
+					return
+			
+			if self.logger != None:
+				self.logger(f"   {_colors.RED}+ fetching {name} -> {ipath} {_colors.END}")
+			e = self.add_git(name, github_path).branch("main")	
+			e.install(ipath)
 
 		self.add_bucket(abspath)
 
