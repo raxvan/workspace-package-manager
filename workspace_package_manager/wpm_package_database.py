@@ -43,7 +43,7 @@ class PackageDatabaseConstructor(object):
 		if not os.path.exists(abspath):
 			requirement = None
 			if property_check != None:
-				requirement = self.database.fetch_requirement(property_check);
+				requirement = self.active_bucket.fetch_requirement(property_check);
 				if requirement == None:
 					if self.logger != None:
 						self.logger(f"   {_colors.YELLOW}!ignoring {_colors.CYAN}{name}{_colors.YELLOW} due to {property_check} missing ...{_colors.END}")
