@@ -101,3 +101,14 @@ class Colors:
 			kernel32 = __import__("ctypes").windll.kernel32
 			kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
 			del kernel32
+
+
+def LineSize():
+	try:
+		terminal_size = os.get_terminal_size()
+		columns = terminal_size.columns
+	except OSError:
+		columns = 80
+	
+	# Print dashes across the current line
+	return columns

@@ -69,7 +69,7 @@ class PackageDatabaseConstructor(object):
 		if self.logger != None:
 			duration = wpm_internal_utils.compute_duration(start)
 			self.logger(f"{_colors.LIGHT_GREEN}-- {_colors.BOLD}OK{_colors.END} {_colors.DARK_GRAY}({duration}){_colors.END}")
-			self.logger(_colors.DARK_GRAY + "-" * 64 + _colors.END)
+			self.logger(_colors.DARK_GRAY + "-" * wpm_internal_utils.LineSize() + _colors.END)
 
 	def add_git(self, package_name, params):
 		entry = wpm_package_handlers.GitEntry(package_name, self.active_bucket)
@@ -305,15 +305,15 @@ class PackageDatabase(object):
 		self.fileFormats = []
 
 	def load_workspace(self, workspace):
+		return
+		#config_path = os.path.join(workspace, ".wpm", "config.json")
+		#try:
+		#	if os.path.exists(config_path):
+		#		with open(config_path, "r") as f:
+		#			self.properties.update(json.load(f))
 
-		config_path = os.path.join(workspace, ".wpm", "config.json")
-		try:
-			if os.path.exists(config_path):
-				with open(config_path, "r") as f:
-					self.properties.update(json.load(f))
-
-		except Exception as e:
-			raise Exception(f"{_colors.RED}[ERROR]{_colors.END} Failed to load config {config_path}\n{e}")
+		#except Exception as e:
+		#	raise Exception(f"{_colors.RED}[ERROR]{_colors.END} Failed to load config {config_path}\n{e}")
 
 	def get_all_names(self):
 		return [x for x,_ in self.db.items()]

@@ -30,12 +30,13 @@ def get_package_search_locations(workspace):
 
 def load_all_packages(workspace, silent):
 	packs = wpm_package_database.PackageDatabase()
+	
 	packs.load_workspace(workspace)
 
 	logger = print
 	if silent:
 		logger = None
-
+	
 	loader = wpm_package_database.PackageDatabaseConstructor(packs, logger)
 	
 	bucket_list = get_package_search_locations(workspace)
@@ -75,9 +76,9 @@ def _do_revision(workspace, silent, remoterev, package_name_ref):
 	else:
 		rev = package_info.get_installed_revision(workspace)
 
-	print("-" * 48)
+	print("-" * wpm_internal_utils.LineSize())
 	print("    " + rev)
-	print("-" * 48)
+	print("-" * wpm_internal_utils.LineSize())
 
 def _do_install(workspace, silent, package_name_ref, force, shallow, optional):
 	packs = load_all_packages(workspace, silent)
@@ -214,7 +215,7 @@ def _do_list(workspace : str, silent : bool, args):
 	_showloc = False
 
 	packs = load_all_packages(workspace, silent)
-
+	
 	names = sorted(packs.get_all_names())
 	if not names:
 		print("Missing packages")
@@ -279,7 +280,7 @@ def _exec_action(workspace, args):
 
 		os.chdir(originalDirectory)
 	except Exception as e:
-		print("-" * 120)
+		print("-" * wpm_internal_utils.LineSize())
 		print(f"{clrs.RED}<<< FAILED >>>{clrs.END}")
 		print(str(e))
 
