@@ -207,8 +207,6 @@ def install_bucket(url, abspath, folder):
 		if model.locked != None:
 			branch = model.locked
 		
-		repo.git.checkout(branch)
-
 		command = ""		
 		command += git_add_safe_command(workspace, entry)
 		command += git_user_command(workspace, entry)
@@ -217,6 +215,7 @@ def install_bucket(url, abspath, folder):
 		if rc != 0:
 			return False
 
+		repo.git.checkout(branch)
 
 		return True
 	except GitCommandError as e:
@@ -247,8 +246,6 @@ def install_git_entry(workspace, entry):
 		branch = model.active_branch
 		if model.locked != None:
 			branch = model.locked
-		
-		repo.git.checkout(branch)
 
 		command = ""		
 		command += git_add_safe_command(workspace, entry)
@@ -258,6 +255,7 @@ def install_git_entry(workspace, entry):
 		if rc != 0:
 			return False
 
+		repo.git.checkout(branch)
 
 		return True
 	except GitCommandError as e:
