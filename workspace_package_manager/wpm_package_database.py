@@ -100,6 +100,9 @@ class PackageDatabaseConstructor(object):
 	def require(self, pname):
 		return self.active_bucket.fetch_requirement(pname)
 
+	def reset_factory(self, factory):
+		self.database.factory = factory
+
 	def _add_entry(self, entry, contents):
 		if entry.deserialize(contents) == False:
 			if self.logger != None:
@@ -334,7 +337,10 @@ class PackageDatabase(object):
 			return self.factory.tryResolve(pname)
 
 		m = f"--- require:{pname} --- (empty to ignore):"
-		return input(m)
+		i = input(m).strip()
+		if i == "":
+			return None
+		return i
 
 	def try_file_resolve(self, filename):
 		if self.factory != None:
