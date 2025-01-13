@@ -4,7 +4,6 @@ import io
 import sys
 import json
 import hashlib
-import requests
 import zipfile
 import time
 import shutil

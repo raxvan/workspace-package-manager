@@ -2,7 +2,7 @@
 
 import os
 import sys
-
+import requests
 from . import wpm_internal_utils
 
 import git
@@ -12,7 +12,6 @@ import git
 # https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html
 
 def download_github_repository(destination_path, zipurl, token, branch_name):
-
 	headers = {
 		"Authorization": f"token {token}",
 		"Accept": "application/vnd.github.v3+json"

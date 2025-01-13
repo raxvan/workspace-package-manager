@@ -2,7 +2,6 @@
 import os
 import sys
 import json
-import requests
 import zipfile
 import io
 import shutil

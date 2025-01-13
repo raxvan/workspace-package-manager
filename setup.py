@@ -9,6 +9,7 @@ setup(
     packages = find_packages(),
     install_requires = [
         "GitPython",
+        "requests"
     ],
     python_requires = '>=3.6',
     entry_points = {
