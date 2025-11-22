@@ -332,20 +332,22 @@ class PackageDatabase(object):
 	#######################################################################################################
 
 	def try_resolve(self, pname):
+		result = None
 		if self.factory != None:
-			return self.factory.tryResolve(pname)
-
+			result = self.factory.tryResolve(pname)
+		if result != None:
+			return result
 		m = f"--- require:{pname} --- (empty to ignore):"
 		i = input(m).strip()
 		if i == "":
 			return None
 		return i
 
-	def try_file_resolve(self, filename):
-		if self.factory != None:
-			return self.factory.tryFileResolve(pname)
-
-		return None
+	#def try_file_resolve(self, filename):
+	#	if self.factory != None:
+	#		return self.factory.tryFileResolve(pname)
+	#
+	#	return None
 
 	#######################################################################################################
 	#######################################################################################################

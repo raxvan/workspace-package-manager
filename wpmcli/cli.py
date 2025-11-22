@@ -18,6 +18,7 @@ clrs = wpm_internal_utils.Colors
 
 _env_search_locations = os.environ.get("WPM_SEARCH_LOCATIONS", None)
 _env_worskace_path = os.environ.get("WPM_WORKSPACE_PATH", None)
+_env_worskace_addr = os.environ.get("WPM_VAULT_ADDR", None)
 
 def validate_search_locations(workspace):
 	if _env_search_locations == None:
@@ -30,6 +31,8 @@ def get_package_search_locations(workspace):
 
 def load_all_packages(workspace, silent):
 	packs = wpm_package_database.PackageDatabase()
+
+	packs.factory = VaultFactory()
 	
 	packs.load_workspace(workspace)
 
@@ -45,6 +48,25 @@ def load_all_packages(workspace, silent):
 	return packs
 
 #####################################################################################################
+class VaultFactory:
+	def __init__(self):
+		self.vault = None
+		try:
+			_addr, _port = _env_worskace_addr.split(":")
+			from vaultsrc import vaultClient
+			self.vault = vaultClient.Connect({
+				"host" : _addr,
+				"port" : int(_port)
+			})
+		except:
+			pass
+
+	def tryResolve(self, name):
+		try:
+			return self.vault.GetValue(name)
+		except:
+			pass
+
 #####################################################################################################
 #####################################################################################################
 
