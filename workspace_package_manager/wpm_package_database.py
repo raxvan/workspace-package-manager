@@ -337,9 +337,9 @@ class PackageDatabase(object):
 			result = self.factory.tryResolve(pname)
 		if result != None:
 			return result
-		m = f"--- require:{pname} --- (empty to ignore):"
-		i = input(m).strip()
-		if i == "":
+
+		i = wpm_internal_utils.ReadSecret(f"--- require : {pname} --- (empty to ignore):")
+		if i == "" or i == None:
 			return None
 		return i
 

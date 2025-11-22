@@ -57,6 +57,26 @@ class PackageStatusMessage():
 
 		self.updatable = False
 
+def ReadSecret(promptText):
+	try:
+		from prompt_toolkit import prompt
+		r = prompt(promptText, is_password=True).strip()
+		if r == "":
+			return None
+	except:
+		pass
+
+	try:
+		import getpass
+		firstLine = getpass.getpass(promptText)
+		firstLine = firstLine.strip()
+		if len(firstLine) == 0:
+			return None
+		return firstLine
+	except:
+		return None
+
+	return input(promptText)
 
 def compute_duration(start_time):
 	end = time.time()
